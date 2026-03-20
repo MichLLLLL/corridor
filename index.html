@@ -357,7 +357,7 @@ body::before {
       <ul>
         <li>Cliquez sur <strong>Déplacer</strong> ou appuyez sur <kbd>M</kbd> pour passer en mode déplacement.</li>
         <li>Cliquez sur <strong>Barrière</strong> ou appuyez sur <kbd>B</kbd> pour passer en mode barrière.</li>
-        <li>En mode barrière, <strong>faites défiler la molette</strong> (4 crans) ou appuyez sur <kbd>R</kbd> pour basculer entre barrière horizontale et verticale.</li>
+        <li>En mode barrière, <strong>faites défiler la molette</strong> ou appuyez sur <kbd>R</kbd> pour basculer entre barrière horizontale et verticale.</li>
         <li>Survolez le plateau pour prévisualiser la barrière avant de la poser.</li>
       </ul>
     </div>
@@ -1018,7 +1018,7 @@ canvas.addEventListener('wheel', e => {
   clearTimeout(scrollResetTimer);
   scrollResetTimer = setTimeout(() => { scrollTicks = 0; }, 600);
 
-  if (scrollTicks >= 4) {
+  if (scrollTicks >= 3) {
     scrollTicks    = 0;
     scrollCooldown = true;
     rotateWall();
