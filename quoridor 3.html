@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quoridor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inconsolata:wght@300;400;600&display=swap');
+
+:root {
+  --paper: #f0ece3;
+  --ink: #1a1510;
+  --ink-faint: rgba(26,21,16,0.1);
+  --ink-faint2: rgba(26,21,16,0.05);
+  --p1: #c8392b;
+  --p1-mid: rgba(200,57,43,0.35);
+  --p2: #1a5c9a;
+  --p2-mid: rgba(26,92,154,0.35);
+  --dim: rgba(26,21,16,0.38);
+  --error: #c8392b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: var(--paper); color: var(--ink); font-family: 'Inconsolata', monospace; overflow: hidden; }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 47px, var(--ink-faint2) 47px, var(--ink-faint2) 48px),
+    repeating-linear-gradient(90deg, transparent, transparent 47px, var(--ink-faint2) 47px, var(--ink-faint2) 48px);
+  pointer-events: none; z-index: 0;
+}
+
+.app {
+  position: relative; z-index: 1;
+  width: 100%; height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  gap: 2rem; padding: 1rem;
+}
+
+/* ---- SIDE PANELS ---- */
+.side-panel {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 0.7rem; width: 120px;
+}
+.side-panel.right { align-items: flex-end; }
+
+.player-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.4rem; line-height: 1; letter-spacing: 0.04em;
+  transition: color 0.4s ease, transform 0.4s cubic-bezier(0.34,1.4,0.64,1), opacity 0.4s ease;
+  transform-origin: left center; will-change: transform;
+}
+.side-panel.right .player-label { transform-origin: right center; }
+.player-label.p1 { color: var(--p1); }
+.player-label.p2 { color: var(--p2); }
+.player-label.inactive { color: var(--ink-faint); transform: scale(0.82) translateY(2px); opacity: 0.5; }
+
+.walls-lbl {
+  font-size: 0.55rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--dim); transition: color 0.3s ease;
+}
+
+.wall-track { display: flex; flex-direction: column; gap: 5px; }
+.side-panel.right .wall-track { align-items: flex-end; }
+
+.wall-pip {
+  height: 3px; border-radius: 1.5px;
+  transition: width 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease, background-color 0.4s ease;
+}
+.wall-pip.p1 { background: var(--p1); }
+.wall-pip.p2 { background: var(--p2); }
+.wall-pip.pip-active  { width: 44px; }
+.wall-pip.pip-idle    { width: 30px; }
+.wall-pip.pip-used    { opacity: 0.1; }
+
+/* ---- CENTER ---- */
+.center-col { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+
+.game-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  width: 100%;
+}
+.game-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem;
+  letter-spacing: 0.35em; color: var(--ink); opacity: 0.15;
+}
+.turn-ind {
+  font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dim);
+}
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.turn-ind { animation: slide-in 0.3s ease both; }
+
+/* ---- CONTROLS ---- */
+.controls { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.5rem; }
+
+.mode-group {
+  display: flex; overflow: hidden;
+  border: 1.5px solid rgba(26,21,16,0.18); border-radius: 2px;
+}
+.mode-btn {
+  padding: 0.3rem 0.8rem;
+  font-family: 'Inconsolata', monospace; font-size: 0.6rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  border: none; cursor: pointer;
+  background: transparent; color: var(--dim);
+  transition: background 0.22s ease, color 0.22s ease;
+}
+.mode-btn + .mode-btn { border-left: 1.5px solid rgba(26,21,16,0.14); }
+.mode-btn.a-move { background: var(--ink); color: var(--paper); }
+.mode-btn.a-wall-1 { background: var(--p1); color: var(--paper); }
+.mode-btn.a-wall-2 { background: var(--p2); color: var(--paper); }
+.mode-btn:disabled { opacity: 0.22; cursor: not-allowed; }
+
+.orient-badge {
+  font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 0.28rem 0.6rem;
+  border: 1.5px solid transparent; border-radius: 2px;
+  transition: border-color 0.3s, color 0.3s, opacity 0.25s ease, transform 0.25s ease;
+  white-space: nowrap;
+}
+.orient-badge.hidden { opacity: 0; transform: translateY(-3px); pointer-events: none; }
+.orient-badge.ob-p1 { border-color: var(--p1-mid); color: var(--p1); opacity: 1; transform: none; }
+.orient-badge.ob-p2 { border-color: var(--p2-mid); color: var(--p2); opacity: 1; transform: none; }
+
+/* ---- BOARD ---- */
+.board-wrap { position: relative; }
+
+#board-canvas {
+  display: block;
+  filter: drop-shadow(0 2px 18px rgba(26,21,16,0.07));
+}
+
+/* Pawn jump animation layer */
+#pawn-anim {
+  position: absolute; border-radius: 50%;
+  pointer-events: none; z-index: 5; opacity: 0;
+  /* opacity intentionally NOT listed here — we control it via style.transition directly */
+}
+
+/* ---- STATUS ---- */
+.status-msg {
+  font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--dim); height: 1rem; text-align: center; width: 100%;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+.status-msg.err { color: var(--error); }
+
+/* ---- WIN ---- */
+.win-overlay {
+  position: fixed; inset: 0;
+  background: rgba(240,236,227,0.95);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.8rem; z-index: 200;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.45s ease;
+  backdrop-filter: blur(3px);
+}
+.win-overlay.show { opacity: 1; pointer-events: all; }
+
+.win-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 10vw, 8rem); line-height: 0.9;
+  letter-spacing: 0.04em; text-align: center;
+}
+@keyframes win-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.win-overlay.show .win-big { animation: win-pop 0.5s cubic-bezier(0.34,1.4,0.64,1) both 0.1s; }
+.win-big.p1 { color: var(--p1); }
+.win-big.p2 { color: var(--p2); }
+
+.win-sub {
+  font-size: 0.65rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--dim);
+}
+.win-rule { width: 50px; height: 1.5px; background: rgba(26,21,16,0.15); }
+
+.restart-btn {
+  margin-top: 0.6rem; padding: 0.55rem 2.2rem;
+  font-family: 'Inconsolata', monospace; font-size: 0.65rem;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+  cursor: pointer; border-radius: 1px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.restart-btn:hover { background: var(--ink); color: var(--paper); transform: scale(1.03); }
+
+/* Wall placement pulse */
+@keyframes wall-pulse {
+  0%   { opacity: 0.3; }
+  50%  { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="side-panel" id="panel-p1">
+    <div class="player-label p1" id="lbl-p1">J1</div>
+    <div class="walls-lbl">Barrières</div>
+    <div class="wall-track" id="track-p1"></div>
+  </div>
+
+  <div class="center-col">
+    <div class="game-header">
+      <span class="game-title">Quoridor</span>
+      <span class="turn-ind" id="turn-ind">Tour de J1</span>
+    </div>
+
+    <div class="controls">
+      <div class="mode-group">
+        <button class="mode-btn" id="btn-move" onclick="setMode('move')">Déplacer</button>
+        <button class="mode-btn" id="btn-wall" onclick="setMode('wall')">Barrière</button>
+      </div>
+      <div class="orient-badge hidden" id="orient-badge">Horiz · R</div>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board-canvas"></canvas>
+      <div id="pawn-anim"></div>
+    </div>
+
+    <div class="status-msg" id="status-msg">cliquez une case pour déplacer</div>
+  </div>
+
+  <div class="side-panel right" id="panel-p2">
+    <div class="player-label p2 inactive" id="lbl-p2">J2</div>
+    <div class="walls-lbl">Barrières</div>
+    <div class="wall-track" id="track-p2"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-big p1" id="win-big">J1 gagne</div>
+  <div class="win-sub">a traversé le plateau</div>
+  <div class="win-rule"></div>
+  <button class="restart-btn" onclick="initGame()">↺ Rejouer</button>
+</div>
+
+<script>
+// ================================================================
+// CONFIG
+// ================================================================
+const GRID  = 9;
+const CELL  = 48;
+const GAP   = 9;
+const WALL_T = 5;
+const PAD   = 20;
+const UNIT  = CELL + GAP;
+const SIZE  = PAD * 2 + GRID * CELL + (GRID - 1) * GAP;
+
+const canvas = document.getElementById('board-canvas');
+const ctx    = canvas.getContext('2d');
+const DPR    = Math.min(window.devicePixelRatio || 1, 2);
+canvas.width  = SIZE * DPR;
+canvas.height = SIZE * DPR;
+canvas.style.width  = SIZE + 'px';
+canvas.style.height = SIZE + 'px';
+ctx.scale(DPR, DPR);
+
+// ================================================================
+// COLORS (canvas drawing)
+// ================================================================
+const C = {
+  paper: '#f0ece3',
+  gridLine: 'rgba(26,21,16,0.13)',
+  cellHov:  'rgba(26,21,16,0.07)',
+  moveHint: 'rgba(26,21,16,0.065)',
+  moveBord: 'rgba(26,21,16,0.25)',
+  dot:      'rgba(26,21,16,0.1)',
+  p1:       '#c8392b',
+  p2:       '#1a5c9a',
+  targetP1: 'rgba(200,57,43,0.06)',
+  targetP2: 'rgba(26,92,154,0.06)',
+  wallInv:  'rgba(180,40,40,0.4)',
+};
+
+// ================================================================
+// STATE
+// ================================================================
+let state, wallOwners;
+
+function initGame() {
+  wallOwners = {};
+  state = {
+    pawns:  [[8, 4], [0, 4]],
+    walls:  { h: new Set(), v: new Set() },
+    wallsLeft: [10, 10],
+    currentPlayer: 0,
+    mode:       'move',
+    wallOrient: 'h',
+    hoverCell:  null,
+    hoverWall:  null,
+    gameOver:   false,
+  };
+
+  document.getElementById('win-overlay').classList.remove('show');
+  buildWallTracks();
+  updateUI();
+  setMode('move');
+  render();
+}
+
+// ================================================================
+// COORD HELPERS
+// ================================================================
+function cellXY(r, c)     { return [PAD + c * UNIT, PAD + r * UNIT]; }
+function cellCenter(r, c) { const [x, y] = cellXY(r, c); return [x + CELL/2, y + CELL/2]; }
+
+function xyToCell(x, y) {
+  const lx = x - PAD, ly = y - PAD;
+  if (lx < 0 || ly < 0) return null;
+  const c = Math.floor(lx / UNIT), r = Math.floor(ly / UNIT);
+  if (r < 0 || r >= GRID || c < 0 || c >= GRID) return null;
+  // make sure we're inside the cell, not in the gap
+  const inCellX = (lx % UNIT) < CELL, inCellY = (ly % UNIT) < CELL;
+  return (inCellX && inCellY) ? { r, c } : null;
+}
+
+function xyToWall(x, y) {
+  const o  = state.wallOrient;
+  const lx = x - PAD, ly = y - PAD;
+  if (o === 'h') {
+    let bestR = -1, bestD = 9999;
+    for (let r = 0; r < GRID - 1; r++) {
+      const d = Math.abs(ly - (r * UNIT + CELL + GAP / 2));
+      if (d < bestD) { bestD = d; bestR = r; }
+    }
+    const c = Math.floor(lx / UNIT);
+    return (bestR >= 0 && c >= 0 && c < GRID - 1) ? { r: bestR, c, o } : null;
+  } else {
+    let bestC = -1, bestD = 9999;
+    for (let c = 0; c < GRID - 1; c++) {
+      const d = Math.abs(lx - (c * UNIT + CELL + GAP / 2));
+      if (d < bestD) { bestD = d; bestC = c; }
+    }
+    const r = Math.floor(ly / UNIT);
+    return (bestC >= 0 && r >= 0 && r < GRID - 1) ? { r, c: bestC, o } : null;
+  }
+}
+
+// ================================================================
+// WALL LOGIC
+// ================================================================
+function wKey(r, c) { return `${r},${c}`; }
+
+function wallConflicts(r, c, o) {
+  const { h, v } = state.walls;
+  if (o === 'h') {
+    if (c >= GRID - 1) return true;
+    if (h.has(wKey(r,c)) || h.has(wKey(r,c-1)) || h.has(wKey(r,c+1))) return true;
+    if (v.has(wKey(r,c))) return true;
+    return false;
+  } else {
+    if (r >= GRID - 1) return true;
+    if (v.has(wKey(r,c)) || v.has(wKey(r-1,c)) || v.has(wKey(r+1,c))) return true;
+    if (h.has(wKey(r,c))) return true;
+    return false;
+  }
+}
+
+function isBlocked(r, c, dr, dc, walls) {
+  const { h, v } = walls;
+  if (dr===-1&&dc===0) return h.has(wKey(r-1,c))   || h.has(wKey(r-1,c-1));
+  if (dr=== 1&&dc===0) return h.has(wKey(r,  c))   || h.has(wKey(r,  c-1));
+  if (dr===0&&dc===-1) return v.has(wKey(r,  c-1)) || v.has(wKey(r-1,c-1));
+  if (dr===0&&dc=== 1) return v.has(wKey(r,  c))   || v.has(wKey(r-1,c));
+  return false;
+}
+
+function hasPath(pawns, walls, player) {
+  const target = player === 0 ? 0 : 8;
+  const q = [pawns[player].slice()];
+  const vis = new Set([wKey(...pawns[player])]);
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  while (q.length) {
+    const [r, c] = q.shift();
+    if (r === target) return true;
+    for (const [dr, dc] of dirs) {
+      if (isBlocked(r, c, dr, dc, walls)) continue;
+      const nr = r+dr, nc = c+dc;
+      if (nr<0||nr>=GRID||nc<0||nc>=GRID) continue;
+      const k = wKey(nr, nc);
+      if (!vis.has(k)) { vis.add(k); q.push([nr, nc]); }
+    }
+  }
+  return false;
+}
+
+function getLegalMoves(pawns, walls, player) {
+  const [r, c]   = pawns[player];
+  const [or, oc] = pawns[1-player];
+  const moves = [], dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  for (const [dr, dc] of dirs) {
+    if (isBlocked(r, c, dr, dc, walls)) continue;
+    const nr = r+dr, nc = c+dc;
+    if (nr<0||nr>=GRID||nc<0||nc>=GRID) continue;
+    if (nr===or && nc===oc) {
+      const jr=or+dr, jc=oc+dc;
+      if (jr>=0&&jr<GRID&&jc>=0&&jc<GRID&&!isBlocked(or,oc,dr,dc,walls)) {
+        moves.push([jr,jc]);
+      } else {
+        for (const [ldr,ldc] of dirs) {
+          if ((ldr===-dr&&ldc===-dc)||(ldr===dr&&ldc===dc)) continue;
+          if (isBlocked(or,oc,ldr,ldc,walls)) continue;
+          const lr=or+ldr,lc2=oc+ldc;
+          if (lr>=0&&lr<GRID&&lc2>=0&&lc2<GRID) moves.push([lr,lc2]);
+        }
+      }
+    } else { moves.push([nr,nc]); }
+  }
+  return moves;
+}
+
+// ================================================================
+// UI
+// ================================================================
+function buildWallTracks() {
+  for (let pl = 0; pl < 2; pl++) {
+    const track = document.getElementById(`track-p${pl+1}`);
+    track.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const pip = document.createElement('div');
+      pip.id = `pip-${pl}-${i}`;
+      track.appendChild(pip);
+    }
+    refreshPips(pl);
+  }
+}
+
+function refreshPips(pl) {
+  const left   = state.wallsLeft[pl];
+  const active = state.currentPlayer === pl;
+  for (let i = 0; i < 10; i++) {
+    const pip = document.getElementById(`pip-${pl}-${i}`);
+    if (!pip) continue;
+    const used = i >= left;
+    pip.className = `wall-pip p${pl+1} ${active ? 'pip-active' : 'pip-idle'} ${used ? 'pip-used' : ''}`;
+  }
+}
+
+function updateUI() {
+  const p = state.currentPlayer;
+
+  // Panels
+  ['p1','p2'].forEach((_, i) => {
+    const panel = document.getElementById(`panel-p${i+1}`);
+    panel.className = `side-panel${i === 1 ? ' right' : ''}`;
+    const lbl = document.getElementById(`lbl-p${i+1}`);
+    lbl.className = `player-label p${i+1}${state.currentPlayer === i ? '' : ' inactive'}`;
+    refreshPips(i);
+  });
+
+  // Turn indicator with re-animation trick
+  const ti = document.getElementById('turn-ind');
+  ti.style.animation = 'none';
+  ti.offsetHeight;
+  ti.style.animation = '';
+  ti.textContent = `Tour de J${p+1}`;
+
+  document.getElementById('btn-wall').disabled = state.wallsLeft[p] === 0;
+}
+
+function setMode(m) {
+  state.mode = m;
+  state.hoverCell = null;
+  state.hoverWall = null;
+
+  const p = state.currentPlayer;
+  const btnMove = document.getElementById('btn-move');
+  const btnWall = document.getElementById('btn-wall');
+  const badge   = document.getElementById('orient-badge');
+
+  btnMove.className = 'mode-btn' + (m === 'move' ? ' a-move' : '');
+  btnWall.className = `mode-btn${m === 'wall' ? ` a-wall-${p+1}` : ''}`;
+
+  if (m === 'wall') {
+    badge.className = `orient-badge ob-p${p+1}`;
+    updateOrientBadge();
+  } else {
+    badge.className = 'orient-badge hidden';
+    setStatus('cliquez une case pour déplacer');
+  }
+  render();
+}
+
+function updateOrientBadge() {
+  const p = state.currentPlayer;
+  document.getElementById('orient-badge').textContent =
+    (state.wallOrient === 'h' ? '— Horiz' : '| Vert') + ' · R / ↕';
+  setStatus(state.wallOrient === 'h' ? 'barrière horizontale' : 'barrière verticale');
+}
+
+function setStatus(msg, err) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = 'status-msg' + (err ? ' err' : '');
+}
+
+function rotateWall() {
+  state.wallOrient = state.wallOrient === 'h' ? 'v' : 'h';
+  state.hoverWall  = null;
+  updateOrientBadge();
+  // Animate orient badge
+  const badge = document.getElementById('orient-badge');
+  badge.style.transform = 'scale(1.15)';
+  setTimeout(() => { badge.style.transform = ''; }, 200);
+  render();
+}
+
+// ================================================================
+// RENDER
+// ================================================================
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y,   x+w, y+r,   r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);   ctx.arcTo(x,   y+h, x,   y+h-r, r);
+  ctx.lineTo(x, y+r);     ctx.arcTo(x,   y,   x+r, y,     r);
+  ctx.closePath();
+}
+
+function render() {
+  ctx.clearRect(0, 0, SIZE, SIZE);
+  ctx.fillStyle = C.paper;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Target row tints
+  for (let c = 0; c < GRID; c++) {
+    const [x0, y0] = cellXY(0, c);
+    ctx.fillStyle = C.targetP2; rr(x0, y0, CELL, CELL, 2); ctx.fill();
+    const [x1, y1] = cellXY(8, c);
+    ctx.fillStyle = C.targetP1; rr(x1, y1, CELL, CELL, 2); ctx.fill();
+  }
+
+  const lm = state.gameOver ? [] : getLegalMoves(state.pawns, state.walls, state.currentPlayer);
+
+  // Grid cells
+  for (let r = 0; r < GRID; r++) {
+    for (let c = 0; c < GRID; c++) {
+      const [x, y] = cellXY(r, c);
+      const isLegal = state.mode === 'move' && lm.some(([lr,lc]) => lr===r&&lc===c);
+      const isHov   = state.hoverCell?.r === r && state.hoverCell?.c === c;
+
+      ctx.strokeStyle = C.gridLine; ctx.lineWidth = 1;
+      rr(x+.5, y+.5, CELL-1, CELL-1, 2); ctx.stroke();
+
+      if (isLegal) {
+        ctx.fillStyle = C.moveHint; rr(x, y, CELL, CELL, 2); ctx.fill();
+        ctx.strokeStyle = C.moveBord; ctx.lineWidth = 1.2;
+        rr(x+.5, y+.5, CELL-1, CELL-1, 2); ctx.stroke();
+      }
+      if (isLegal && isHov) {
+        ctx.fillStyle = C.cellHov; rr(x, y, CELL, CELL, 2); ctx.fill();
+      }
+    }
+  }
+
+  // Intersection dots
+  for (let r = 0; r < GRID-1; r++) {
+    for (let c = 0; c < GRID-1; c++) {
+      ctx.beginPath();
+      ctx.arc(PAD + c*UNIT + CELL + GAP/2, PAD + r*UNIT + CELL + GAP/2, 1.3, 0, Math.PI*2);
+      ctx.fillStyle = C.dot; ctx.fill();
+    }
+  }
+
+  // Placed walls
+  state.walls.h.forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    drawHWall(r, c, wallOwners[`h:${key}`] === 0 ? C.p1 : C.p2, false);
+  });
+  state.walls.v.forEach(key => {
+    const [r,c] = key.split(',').map(Number);
+    drawVWall(r, c, wallOwners[`v:${key}`] === 0 ? C.p1 : C.p2, false);
+  });
+
+  // Wall preview
+  if (state.mode === 'wall' && state.hoverWall && !state.gameOver) {
+    const { r, c, o } = state.hoverWall;
+    const bad = wallConflicts(r, c, o);
+    const p   = state.currentPlayer;
+    const col = bad ? C.wallInv : (p===0 ? 'rgba(200,57,43,0.42)' : 'rgba(26,92,154,0.42)');
+    if (o === 'h') drawHWall(r, c, col, true);
+    else           drawVWall(r, c, col, true);
+  }
+
+  // Pawns (skip the one currently flying via CSS div)
+  if (animatingPawn !== 0) drawPawn(0);
+  if (animatingPawn !== 1) drawPawn(1);
+}
+
+function drawHWall(r, c, col, preview) {
+  const x = PAD + c * UNIT;
+  const y = PAD + r * UNIT + CELL + (GAP - WALL_T) / 2;
+  ctx.fillStyle = col; rr(x, y, CELL*2+GAP, WALL_T, 2); ctx.fill();
+  if (preview) {
+    ctx.strokeStyle = col.replace(/[\d.]+\)$/, '0.85)');
+    ctx.lineWidth = 1.2; rr(x, y, CELL*2+GAP, WALL_T, 2); ctx.stroke();
+  }
+}
+function drawVWall(r, c, col, preview) {
+  const x = PAD + c * UNIT + CELL + (GAP - WALL_T) / 2;
+  const y = PAD + r * UNIT;
+  ctx.fillStyle = col; rr(x, y, WALL_T, CELL*2+GAP, 2); ctx.fill();
+  if (preview) {
+    ctx.strokeStyle = col.replace(/[\d.]+\)$/, '0.85)');
+    ctx.lineWidth = 1.2; rr(x, y, WALL_T, CELL*2+GAP, 2); ctx.stroke();
+  }
+}
+
+function drawPawn(player) {
+  const [r, c] = state.pawns[player];
+  const [cx, cy] = cellCenter(r, c);
+  const rad   = CELL * 0.29;
+  const color = player === 0 ? C.p1 : C.p2;
+
+  // Drop shadow
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + rad*0.65 + 1.5, rad*0.68, rad*0.2, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(26,21,16,0.16)'; ctx.fill();
+  ctx.restore();
+
+  // Outer ring
+  ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.fill();
+
+  // White inner ring
+  ctx.beginPath(); ctx.arc(cx, cy, rad*0.58, 0, Math.PI*2);
+  ctx.fillStyle = C.paper; ctx.fill();
+
+  // Center dot
+  ctx.beginPath(); ctx.arc(cx, cy, rad*0.2, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.fill();
+
+  // Rim stroke
+  ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI*2);
+  ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
+}
+
+// ================================================================
+// PAWN MOVE ANIMATION
+// ================================================================
+let animatingPawn = -1; // player index currently flying, or -1
+
+function animPawnMove(player, fromR, fromC, toR, toC, onDone) {
+  const anim = document.getElementById('pawn-anim');
+  const [fx, fy] = cellCenter(fromR, fromC);
+  const [tx, ty] = cellCenter(toR, toC);
+  const rad   = CELL * 0.29;
+  const s     = rad * 2 + 6;
+  const color = player === 0 ? C.p1 : C.p2;
+
+  // 1) Snap div to source, fully transparent, no transition yet
+  anim.style.transition = 'none';
+  anim.style.width      = s + 'px';
+  anim.style.height     = s + 'px';
+  anim.style.background = color;
+  anim.style.boxShadow  = `0 0 0 ${Math.round(rad*0.56)}px ${C.paper} inset, 0 0 0 ${Math.round(rad*0.2+rad*0.56)}px ${color} inset`;
+  anim.style.opacity    = '0';
+  anim.style.left = (fx - s/2) + 'px';
+  anim.style.top  = (fy - s/2) + 'px';
+
+  // 2) Hide canvas pawn for this player and re-render clean board
+  animatingPawn = player;
+  render();
+
+  // 3) Force reflow, then enable position + fade-in together
+  anim.offsetHeight;
+  anim.style.transition = 'left 0.32s cubic-bezier(0.34,1.45,0.64,1), top 0.32s cubic-bezier(0.34,1.45,0.64,1), opacity 0.08s ease';
+  anim.style.opacity = '1';
+  anim.style.left    = (tx - s/2) + 'px';
+  anim.style.top     = (ty - s/2) + 'px';
+
+  // 4) Once landed: fade div out, then reveal canvas pawn + call onDone
+  setTimeout(() => {
+    anim.style.transition = 'opacity 0.08s ease';
+    anim.style.opacity    = '0';
+    animatingPawn = -1;
+    setTimeout(() => { onDone(); }, 90);
+  }, 320);
+}
+
+// ================================================================
+// INPUT
+// ================================================================
+canvas.addEventListener('mousemove', e => {
+  if (state.gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+
+  if (state.mode === 'move') {
+    const cell = xyToCell(x, y);
+    const lm   = getLegalMoves(state.pawns, state.walls, state.currentPlayer);
+    state.hoverWall = null;
+    if (cell && lm.some(([lr,lc]) => lr===cell.r&&lc===cell.c)) {
+      state.hoverCell = cell;
+      canvas.style.cursor = 'pointer';
+    } else {
+      state.hoverCell = null;
+      canvas.style.cursor = 'default';
+    }
+  } else {
+    state.hoverCell = null;
+    const w = xyToWall(x, y);
+    state.hoverWall = w;
+    canvas.style.cursor = (w && !wallConflicts(w.r,w.c,w.o)) ? 'crosshair' : 'not-allowed';
+  }
+  render();
+});
+
+canvas.addEventListener('mouseleave', () => {
+  state.hoverCell = null; state.hoverWall = null; render();
+});
+
+canvas.addEventListener('click', e => {
+  if (state.gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+
+  if (state.mode === 'move') {
+    const cell = xyToCell(x, y);
+    if (!cell) return;
+    const lm = getLegalMoves(state.pawns, state.walls, state.currentPlayer);
+    if (!lm.some(([lr,lc]) => lr===cell.r&&lc===cell.c)) return;
+
+    const p = state.currentPlayer;
+    const [fr, fc] = state.pawns[p];
+
+    // animPawnMove hides the canvas pawn and flies the CSS div;
+    // state.pawns still holds [fr, fc] during the flight so the
+    // board renders correctly underneath.
+    animPawnMove(p, fr, fc, cell.r, cell.c, () => {
+      state.pawns[p] = [cell.r, cell.c];
+      if (cell.r === (p === 0 ? 0 : 8)) { winGame(p); return; }
+      nextTurn();
+    });
+
+  } else {
+    const w = xyToWall(x, y);
+    if (!w || state.wallsLeft[state.currentPlayer]===0 || wallConflicts(w.r,w.c,w.o)) return;
+
+    const test = { h: new Set(state.walls.h), v: new Set(state.walls.v) };
+    test[w.o].add(wKey(w.r, w.c));
+    if (!hasPath(state.pawns, test, 0) || !hasPath(state.pawns, test, 1)) {
+      setStatus('chemin bloqué — un accès doit rester ouvert', true);
+      setTimeout(() => { if (!state.gameOver) setStatus(''); }, 2400);
+      return;
+    }
+
+    const key = `${w.o}:${wKey(w.r,w.c)}`;
+    state.walls[w.o].add(wKey(w.r,w.c));
+    wallOwners[key] = state.currentPlayer;
+    state.wallsLeft[state.currentPlayer]--;
+    nextTurn();
+  }
+});
+
+// Scroll = rotate wall (requires 4 distinct scroll ticks + 300ms cooldown)
+let scrollTicks   = 0;
+let scrollCooldown = false;
+let scrollResetTimer = null;
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (state.mode !== 'wall' || state.gameOver) return;
+
+  // Normalize: each wheel event counts as 1 tick regardless of deltaY magnitude
+  if (scrollCooldown) return;
+
+  scrollTicks++;
+
+  // Reset tick counter if user pauses (> 600ms between events)
+  clearTimeout(scrollResetTimer);
+  scrollResetTimer = setTimeout(() => { scrollTicks = 0; }, 600);
+
+  if (scrollTicks >= 3) {
+    scrollTicks    = 0;
+    scrollCooldown = true;
+    rotateWall();
+    setTimeout(() => { scrollCooldown = false; }, 300);
+  }
+}, { passive: false });
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (state.gameOver) return;
+  if (e.key === 'r' || e.key === 'R') { if (state.mode === 'wall') rotateWall(); }
+  if (e.key === 'm' || e.key === 'M') setMode('move');
+  if (e.key === 'b' || e.key === 'B') { if (state.wallsLeft[state.currentPlayer]>0) setMode('wall'); }
+});
+
+function nextTurn() {
+  state.currentPlayer = 1 - state.currentPlayer;
+  state.hoverCell = null; state.hoverWall = null;
+  updateUI();
+  setMode('move');
+  render();
+}
+
+function winGame(player) {
+  state.gameOver = true; render();
+  setTimeout(() => {
+    const big = document.getElementById('win-big');
+    big.textContent = `J${player+1} gagne`;
+    big.className   = `win-big p${player+1}`;
+    document.getElementById('win-overlay').classList.add('show');
+  }, 400);
+}
+
+// ================================================================
+initGame();
+</script>
+</body>
+</html>
