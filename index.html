@@ -191,12 +191,87 @@ body::before {
 }
 .restart-btn:hover { background: var(--ink); color: var(--paper); transform: scale(1.03); }
 
-/* Wall placement pulse */
-@keyframes wall-pulse {
-  0%   { opacity: 0.3; }
-  50%  { opacity: 1; }
-  100% { opacity: 0.3; }
+/* ---- FOOTER ---- */
+.footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 1.5rem;
+  padding: 0.6rem 1rem;
+  z-index: 50;
 }
+.footer-btn {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.52rem; letter-spacing: 0.25em; text-transform: uppercase;
+  color: rgba(26,21,16,0.28); background: none; border: none;
+  cursor: pointer; padding: 0.2rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.footer-btn:hover { color: var(--ink); border-color: rgba(26,21,16,0.3); }
+
+/* ---- MODAL ---- */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(240,236,227,0.96);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-backdrop.show { opacity: 1; pointer-events: all; }
+
+.modal {
+  width: min(560px, 90vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1.5px solid rgba(26,21,16,0.14);
+  border-radius: 2px;
+  padding: 2.5rem 2.8rem;
+  position: relative;
+  transform: translateY(10px);
+  transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1);
+}
+.modal-backdrop.show .modal { transform: translateY(0); }
+
+.modal-close {
+  position: absolute; top: 1rem; right: 1.2rem;
+  background: none; border: none; cursor: pointer;
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--dim);
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--ink); }
+
+.modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem; letter-spacing: 0.1em;
+  color: var(--ink); margin-bottom: 1.4rem;
+  line-height: 1;
+}
+
+.modal-section {
+  margin-bottom: 1.2rem;
+}
+.modal-section h3 {
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.65rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(26,21,16,0.1); padding-bottom: 0.3rem;
+}
+.modal-section p, .modal-section li {
+  font-size: 0.78rem; line-height: 1.75;
+  color: rgba(26,21,16,0.72);
+}
+.modal-section ul { padding-left: 1.2rem; }
+.modal-section li { margin-bottom: 0.25rem; }
+.modal-rule { width: 100%; height: 1px; background: rgba(26,21,16,0.08); margin: 1.4rem 0; }
+
+/* scrollbar styling */
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-track { background: transparent; }
+.modal::-webkit-scrollbar-thumb { background: rgba(26,21,16,0.15); border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -242,6 +317,164 @@ body::before {
   <div class="win-sub">a traversé le plateau</div>
   <div class="win-rule"></div>
   <button class="restart-btn" onclick="initGame()">↺ Rejouer</button>
+</div>
+
+<!-- ---- FOOTER ---- -->
+<div class="footer">
+  <button class="footer-btn" onclick="openModal('modal-howto')">Comment jouer</button>
+  <button class="footer-btn" onclick="openModal('modal-rules')">Règles complètes</button>
+  <button class="footer-btn" onclick="openModal('modal-privacy')">Confidentialité</button>
+</div>
+
+<!-- ---- MODAL : COMMENT JOUER ---- -->
+<div class="modal-backdrop" id="modal-howto">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-howto')">✕ Fermer</button>
+    <div class="modal-title">Comment jouer</div>
+
+    <div class="modal-section">
+      <h3>Objectif</h3>
+      <p>Faites traverser votre pion d'un côté à l'autre du plateau avant votre adversaire. J1 (rouge) part en bas et vise la rangée du haut. J2 (bleu) fait le chemin inverse.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Déroulement d'un tour</h3>
+      <p>À chaque tour, choisissez <strong>une</strong> action parmi deux :</p>
+      <ul>
+        <li><strong>Déplacer</strong> votre pion d'une case (haut, bas, gauche, droite). Les cases accessibles s'affichent en surbrillance.</li>
+        <li><strong>Poser une barrière</strong> pour ralentir l'adversaire. Chaque joueur dispose de 10 barrières pour toute la partie.</li>
+      </ul>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Contrôles</h3>
+      <ul>
+        <li>Cliquez sur <strong>Déplacer</strong> ou appuyez sur <kbd>M</kbd> pour passer en mode déplacement.</li>
+        <li>Cliquez sur <strong>Barrière</strong> ou appuyez sur <kbd>B</kbd> pour passer en mode barrière.</li>
+        <li>En mode barrière, <strong>faites défiler la molette</strong> (4 crans) ou appuyez sur <kbd>R</kbd> pour basculer entre barrière horizontale et verticale.</li>
+        <li>Survolez le plateau pour prévisualiser la barrière avant de la poser.</li>
+      </ul>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Saut par-dessus</h3>
+      <p>Si les deux pions se retrouvent côte à côte, vous pouvez sauter par-dessus votre adversaire. Si un mur bloque le saut direct, vous pouvez bifurquer à gauche ou à droite.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ---- MODAL : RÈGLES COMPLÈTES ---- -->
+<div class="modal-backdrop" id="modal-rules">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-rules')">✕ Fermer</button>
+    <div class="modal-title">Règles du jeu</div>
+
+    <div class="modal-section">
+      <h3>Matériel</h3>
+      <p>Un plateau de 9×9 cases, 2 pions, 20 barrières (10 par joueur).</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Mise en place</h3>
+      <p>Chaque joueur place son pion au centre de sa ligne de départ (colonne 5). Un tirage au sort désigne le premier joueur — ici, J1 commence toujours.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Déplacement des pions</h3>
+      <p>Un pion se déplace d'une case par tour, horizontalement ou verticalement. Les mouvements en diagonale sont interdits. Les barrières doivent être contournées.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Pose des barrières</h3>
+      <ul>
+        <li>Une barrière occupe exactement l'espace entre deux blocs de deux cases adjacentes.</li>
+        <li>Deux barrières ne peuvent pas se chevaucher ni se croiser.</li>
+        <li><strong>Il est interdit</strong> de fermer totalement le chemin d'un joueur : chaque pion doit toujours avoir au moins un chemin possible vers sa ligne de but.</li>
+        <li>Une barrière posée ne peut plus être retirée.</li>
+      </ul>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Face à face et saut</h3>
+      <ul>
+        <li>Quand deux pions sont voisins sans barrière entre eux, le joueur actif peut sauter par-dessus et se placer derrière l'adversaire.</li>
+        <li>Si une barrière se trouve derrière le pion sauté, le joueur peut bifurquer à gauche ou à droite de l'adversaire.</li>
+        <li>On ne peut pas sauter plus d'un pion à la fois.</li>
+      </ul>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Fin de partie</h3>
+      <p>Le premier joueur qui atteint l'une des 9 cases de la rangée opposée à sa ligne de départ remporte la partie.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Règle à 4 joueurs (non implémentée)</h3>
+      <p>Les 4 pions se placent au centre de chacun des 4 côtés du plateau. Chaque joueur dispose de 5 barrières. Les règles sont identiques.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ---- MODAL : CONFIDENTIALITÉ ---- -->
+<div class="modal-backdrop" id="modal-privacy">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-privacy')">✕ Fermer</button>
+    <div class="modal-title">Confidentialité</div>
+
+    <div class="modal-section">
+      <h3>Données collectées</h3>
+      <p>Ce site ne collecte aucune donnée personnelle. Aucun compte, aucun formulaire, aucun cookie propriétaire ne sont utilisés. Toutes les parties se déroulent localement dans votre navigateur.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Cookies et publicité</h3>
+      <p>Ce site peut afficher des publicités via Google AdSense. Google est susceptible d'utiliser des cookies publicitaires pour personnaliser les annonces en fonction de vos centres d'intérêt et de vos visites précédentes. Vous pouvez gérer vos préférences publicitaires sur <a href="https://adssettings.google.com" target="_blank" rel="noopener" style="color:var(--ink)">adssettings.google.com</a>.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Services tiers</h3>
+      <ul>
+        <li><strong>Google Fonts</strong> — chargement des polices Bebas Neue et Inconsolata. Google peut enregistrer l'adresse IP de la requête.</li>
+        <li><strong>Google AdSense</strong> — réseau publicitaire soumis à la <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" style="color:var(--ink)">politique de confidentialité de Google</a>.</li>
+      </ul>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Vos droits (RGPD)</h3>
+      <p>Conformément au Règlement Général sur la Protection des Données (UE 2016/679), vous disposez d'un droit d'accès, de rectification et de suppression des données vous concernant. Ce site ne traitant aucune donnée personnelle directement, ces droits s'exercent principalement auprès de Google pour ce qui concerne les cookies publicitaires.</p>
+    </div>
+
+    <div class="modal-rule"></div>
+
+    <div class="modal-section">
+      <h3>Contact</h3>
+      <p>Pour toute question relative à la confidentialité, vous pouvez contacter le responsable du site.</p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -783,7 +1016,7 @@ canvas.addEventListener('wheel', e => {
   clearTimeout(scrollResetTimer);
   scrollResetTimer = setTimeout(() => { scrollTicks = 0; }, 600);
 
-  if (scrollTicks >= 3) {
+  if (scrollTicks >= 4) {
     scrollTicks    = 0;
     scrollCooldown = true;
     rotateWall();
@@ -816,6 +1049,26 @@ function winGame(player) {
     document.getElementById('win-overlay').classList.add('show');
   }, 400);
 }
+
+// ================================================================
+// MODALS
+// ================================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+// Close on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+});
+// Close on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.show').forEach(el => el.classList.remove('show'));
+  }
+});
 
 // ================================================================
 initGame();
