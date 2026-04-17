@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUORIDOR : RIFT WALKERS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+:root {
+  --bg: #0a0c12;
+  --bg2: #111520;
+  --bg3: #1a1f2e;
+  --panel: #161b28;
+  --border: #2a3350;
+  --border2: #3a4a7a;
+  --player: #5de4c7;
+  --player-glow: #5de4c7aa;
+  --ai: #ff6b6b;
+  --ai-glow: #ff6b6baa;
+  --wall-p: #f7c948;
+  --wall-ai: #ff6b6b;
+  --gold: #f7c948;
+  --gold2: #ffaa00;
+  --text: #c8d8ff;
+  --text2: #7a8fb8;
+  --accent: #7c5de4;
+  --accent2: #5de4c7;
+  --green: #5de48a;
+  --red: #e45d5d;
+  --cell: #141824;
+  --cell-hover: #1e2538;
+  --ghost-wall: #f7c94844;
+  --tile-dark: #0e1018;
+  --tile-light: #13182a;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  image-rendering: pixelated;
+}
+
+/* Scanline overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* === SCREENS === */
+.screen { display: none; width: 100%; min-height: 100vh; align-items: center; justify-content: center; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* === TITLE SCREEN === */
+#screen-title {
+  background: radial-gradient(ellipse at 50% 30%, #1a1038 0%, #0a0c12 70%);
+  position: relative;
+  overflow: hidden;
+}
+#screen-title::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(1px 1px at 20% 30%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 60%, #fff6 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 80%, #fff5 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.title-logo {
+  text-align: center;
+  margin-bottom: 40px;
+}
+.title-logo h1 {
+  font-size: 22px;
+  color: var(--accent2);
+  text-shadow: 0 0 20px var(--accent2), 0 0 40px #5de4c755;
+  letter-spacing: 4px;
+  line-height: 1.6;
+}
+.title-logo h2 {
+  font-size: 10px;
+  color: var(--text2);
+  margin-top: 8px;
+  letter-spacing: 8px;
+}
+.title-logo .sub {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: var(--gold);
+  margin-top: 16px;
+}
+
+.pixel-grid-deco {
+  display: grid;
+  grid-template-columns: repeat(7,24px);
+  grid-template-rows: repeat(7,24px);
+  gap: 2px;
+  margin: 24px auto;
+  border: 2px solid var(--border2);
+  padding: 4px;
+  background: var(--bg2);
+  box-shadow: 0 0 30px #7c5de433;
+}
+.pixel-grid-deco .dc {
+  background: var(--cell);
+  border: 1px solid var(--border);
+}
+.pixel-grid-deco .dc.dp { background: var(--player); box-shadow: 0 0 8px var(--player); }
+.pixel-grid-deco .dc.da { background: var(--ai); box-shadow: 0 0 8px var(--ai); }
+.pixel-grid-deco .dc.dw { background: var(--wall-p); }
+
+.btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 12px 24px;
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.1s;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  image-rendering: pixelated;
+  background: var(--bg2);
+}
+.btn:active { transform: translate(2px,2px); }
+
+.btn-primary {
+  border-color: var(--accent2);
+  color: var(--accent2);
+  box-shadow: 0 0 12px #5de4c744, inset 0 0 12px #5de4c711;
+}
+.btn-primary:hover {
+  background: #5de4c722;
+  box-shadow: 0 0 20px #5de4c766, inset 0 0 20px #5de4c722;
+}
+
+.btn-gold {
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 12px #f7c94844;
+}
+.btn-gold:hover { background: #f7c94822; box-shadow: 0 0 20px #f7c94866; }
+
+.btn-red {
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: 0 0 12px #e45d5d44;
+}
+.btn-red:hover { background: #e45d5d22; }
+
+.btn-accent {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 12px #7c5de444;
+}
+.btn-accent:hover { background: #7c5de422; }
+
+.btn-sm { font-size: 7px; padding: 8px 14px; }
+.btn-xs { font-size: 6px; padding: 6px 10px; }
+
+/* === GAME SCREEN === */
+#screen-game {
+  padding: 12px;
+  gap: 10px;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+/* Left panel */
+.panel-left {
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Right panel */
+.panel-right {
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-box {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 10px;
+}
+.panel-box h3 {
+  font-size: 7px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+/* Center - game board area */
+.game-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* === BOARD === */
+.board-container {
+  position: relative;
+  background: var(--bg2);
+  border: 3px solid var(--border2);
+  padding: 8px;
+  box-shadow: 0 0 40px #7c5de422, inset 0 0 20px #00000044;
+}
+
+#board-canvas {
+  display: block;
+  image-rendering: pixelated;
+  cursor: crosshair;
+}
+
+/* === HUD === */
+.hud-bar {
+  width: 100%;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.hud-stat .label { font-size: 6px; color: var(--text2); }
+.hud-stat .value { font-size: 10px; }
+
+.hud-stat.turn-player .value { color: var(--player); text-shadow: 0 0 10px var(--player); }
+.hud-stat.turn-ai .value { color: var(--ai); text-shadow: 0 0 10px var(--ai); }
+
+.walls-row {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  max-width: 130px;
+}
+.wall-pip {
+  width: 8px;
+  height: 8px;
+  background: var(--wall-p);
+  border: 1px solid #f7c94888;
+  image-rendering: pixelated;
+}
+.wall-pip.used { background: var(--border); border-color: var(--border); }
+
+/* === MODE BUTTONS === */
+.mode-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mode-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  padding: 7px 10px;
+  border: 2px solid var(--border);
+  background: var(--bg2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.mode-btn:hover { border-color: var(--text2); color: var(--text); }
+.mode-btn.active { border-color: var(--accent2); color: var(--accent2); background: #5de4c711; box-shadow: 0 0 8px #5de4c733; }
+.mode-btn.active-wall { border-color: var(--wall-p); color: var(--wall-p); background: #f7c94811; }
+
+/* === LOG === */
+.log-box {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.log-box::-webkit-scrollbar { width: 4px; }
+.log-box::-webkit-scrollbar-track { background: var(--bg); }
+.log-box::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.log-entry {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 1px 0;
+  border-bottom: 1px solid #ffffff08;
+  color: var(--text2);
+}
+.log-entry.log-player { color: var(--accent2); }
+.log-entry.log-ai { color: var(--ai); }
+.log-entry.log-sys { color: var(--gold); }
+.log-entry.log-warn { color: var(--red); }
+
+/* === SPELLS === */
+.spell-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.spell-card {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.1s;
+  position: relative;
+}
+.spell-card:hover { border-color: var(--accent); background: #7c5de411; }
+.spell-card.active-spell { border-color: var(--accent2); background: #5de4c711; box-shadow: 0 0 8px #5de4c744; }
+.spell-card.passive { border-color: var(--green); cursor: default; }
+.spell-card.used { opacity: 0.4; cursor: not-allowed; }
+.spell-card .s-icon { font-size: 14px; display: block; text-align: center; }
+.spell-card .s-name { font-size: 5px; color: var(--text2); text-align: center; margin-top: 3px; }
+.spell-card.passive .s-name { color: var(--green); }
+.spell-card .s-uses { position: absolute; top: 2px; right: 4px; font-size: 5px; color: var(--gold); }
+
+/* === SHOP SCREEN === */
+#screen-shop {
+  padding: 20px;
+  background: radial-gradient(ellipse at 50% 20%, #1a1030 0%, #0a0c12 80%);
+}
+.shop-title { font-size: 14px; color: var(--gold); text-shadow: 0 0 20px var(--gold); margin-bottom: 6px; }
+.shop-subtitle { font-family: 'VT323', monospace; font-size: 20px; color: var(--text2); margin-bottom: 24px; }
+
+.shop-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.shop-card {
+  width: 160px;
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.shop-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, #ffffff05);
+}
+.shop-card:hover { border-color: var(--gold); box-shadow: 0 0 20px #f7c94844; transform: translateY(-2px); }
+.shop-card.selected { border-color: var(--accent2); box-shadow: 0 0 20px #5de4c766; }
+.shop-card.cant-afford { opacity: 0.5; cursor: not-allowed; }
+.shop-card .sc-icon { font-size: 28px; text-align: center; display: block; margin-bottom: 8px; }
+.shop-card .sc-name { font-size: 7px; color: var(--text); text-align: center; margin-bottom: 6px; }
+.shop-card .sc-type { font-size: 5px; color: var(--text2); text-align: center; margin-bottom: 8px; letter-spacing: 2px; }
+.shop-card .sc-desc { font-family: 'VT323', monospace; font-size: 14px; color: var(--text2); text-align: center; line-height: 1.4; margin-bottom: 10px; }
+.shop-card .sc-cost { font-size: 8px; color: var(--gold); text-align: center; }
+
+.gold-display {
+  font-size: 12px;
+  color: var(--gold);
+  text-shadow: 0 0 10px var(--gold);
+  margin-bottom: 16px;
+}
+
+/* === WIN/LOSE SCREEN === */
+#screen-result {
+  background: var(--bg);
+}
+.result-title { font-size: 20px; margin-bottom: 10px; }
+.result-title.win { color: var(--accent2); text-shadow: 0 0 30px var(--accent2); }
+.result-title.lose { color: var(--red); text-shadow: 0 0 30px var(--red); }
+.result-stats {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 16px;
+  margin: 16px 0;
+  min-width: 260px;
+}
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+}
+.result-row .val { color: var(--gold); }
+
+/* === ENEMY INFO === */
+.enemy-card {
+  text-align: center;
+}
+.enemy-icon { font-size: 24px; margin-bottom: 6px; display: block; }
+.enemy-name { font-size: 7px; color: var(--ai); text-shadow: 0 0 8px var(--ai); margin-bottom: 4px; }
+.enemy-level { font-size: 5px; color: var(--text2); }
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+.stat-row .sk { font-size: 6px; color: var(--text2); }
+.stat-row .sv { font-size: 7px; color: var(--text); }
+
+/* Progress */
+.run-progress {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.rp-node {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  background: var(--bg2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  position: relative;
+}
+.rp-node.done { border-color: var(--green); background: #5de48a22; color: var(--green); }
+.rp-node.current { border-color: var(--gold); background: #f7c94822; color: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.rp-node.boss { border-color: var(--red); }
+.rp-node.future { color: var(--border); }
+
+/* Blinking cursor */
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0} }
+.blink { animation: blink 1s infinite; }
+
+/* Pixel flash anim */
+@keyframes flash { 0%,100%{opacity:1}50%{opacity:0.3} }
+.flash { animation: flash 0.2s 3; }
+
+/* Tile pattern */
+.checkerboard {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(45deg, var(--tile-dark) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--tile-dark) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--tile-dark) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--tile-dark) 75%);
+  background-size: 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Turn indicator */
+.turn-indicator {
+  font-size: 8px;
+  padding: 6px 16px;
+  border: 2px solid;
+  text-align: center;
+  transition: all 0.2s;
+}
+.turn-indicator.player { border-color: var(--player); color: var(--player); box-shadow: 0 0 10px var(--player-glow); background: #5de4c711; }
+.turn-indicator.ai { border-color: var(--ai); color: var(--ai); box-shadow: 0 0 10px var(--ai-glow); background: #ff6b6b11; }
+.turn-indicator.thinking { color: var(--gold); border-color: var(--gold); background: #f7c94811; }
+
+/* Tile effect indicators */
+.tile-legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.tl-item { display: flex; align-items: center; gap: 4px; }
+.tl-dot { width: 8px; height: 8px; border: 1px solid; }
+.tl-label { font-size: 5px; color: var(--text2); }
+
+/* Spell tooltip */
+.spell-tooltip {
+  position: fixed;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  padding: 8px;
+  font-size: 6px;
+  color: var(--text);
+  max-width: 140px;
+  z-index: 1000;
+  pointer-events: none;
+  display: none;
+}
+.spell-tooltip .tt-icon { font-size: 18px; text-align: center; display: block; margin-bottom: 4px; }
+.spell-tooltip .tt-name { color: var(--accent2); margin-bottom: 4px; }
+.spell-tooltip .tt-desc { font-family: 'VT323', monospace; font-size: 14px; color: var(--text2); line-height: 1.4; }
+
+/* AI HP bar-like path distance display */
+.path-display { display: flex; align-items: center; gap: 6px; }
+.path-bar { flex: 1; height: 6px; background: var(--bg); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.path-bar-fill { height: 100%; transition: width 0.3s; }
+.path-bar-fill.p { background: var(--player); }
+.path-bar-fill.a { background: var(--ai); }
+
+/* Notification popup */
+.notif {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  padding: 10px 20px;
+  font-size: 8px;
+  color: var(--gold);
+  z-index: 5000;
+  display: none;
+  box-shadow: 0 0 20px var(--gold);
+  text-align: center;
+  max-width: 300px;
+}
+
+/* Misc */
+hr.pixel-hr { border: none; border-top: 2px solid var(--border); margin: 6px 0; }
+.center { text-align: center; }
+.flex-col { display: flex; flex-direction: column; }
+.gap4 { gap: 4px; }
+.gap8 { gap: 8px; }
+
+/* Special tile overlays on canvas */
+.tile-ice { color: #aaddff; }
+.tile-mud { color: #996633; }
+
+/* Freeze indicator */
+@keyframes freeze-anim { 0%{box-shadow:0 0 0 0 #aaddff} 100%{box-shadow:0 0 20px 10px #aaddff44} }
+.frozen { animation: freeze-anim 0.5s ease-out; }
+
+/* Shop reroll */
+.shop-actions { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+/* Round title display */
+.round-display {
+  font-size: 8px;
+  color: var(--text2);
+  letter-spacing: 4px;
+}
+.round-display span { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<!-- SPELL TOOLTIP -->
+<div class="spell-tooltip" id="spell-tooltip">
+  <span class="tt-icon" id="tt-icon"></span>
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-desc" id="tt-desc"></div>
+</div>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="screen-title" class="screen active">
+  <div class="title-logo">
+    <h1>QUORIDOR</h1>
+    <h2>RIFT WALKERS</h2>
+    <div class="sub">✦ ROGUELITE STRATEGY ✦</div>
+  </div>
+
+  <div class="pixel-grid-deco" id="deco-grid"></div>
+
+  <div style="display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:16px">
+    <button class="btn btn-primary" onclick="startNewRun()">▶ NOUVELLE PARTIE</button>
+    <button class="btn btn-sm" onclick="showHowToPlay()" style="border-color:var(--text2);color:var(--text2)">? COMMENT JOUER</button>
+  </div>
+
+  <div style="margin-top:24px;font-family:'VT323',monospace;font-size:14px;color:var(--text2);text-align:center;line-height:1.8">
+    Bloquez. Contournez. Survivez.<br>
+    <span style="color:var(--accent2)">★</span> 7 rounds + 1 Boss <span style="color:var(--accent2)">★</span>
+  </div>
+</div>
+
+<!-- ===== HOW TO PLAY SCREEN ===== -->
+<div id="screen-howto" class="screen" style="padding:20px;max-width:560px;gap:12px">
+  <h2 style="font-size:10px;color:var(--accent2);margin-bottom:8px">COMMENT JOUER</h2>
+  <div class="panel-box" style="width:100%;max-width:520px">
+    <h3>CONTRÔLES</h3>
+    <div style="font-family:'VT323',monospace;font-size:15px;line-height:2;color:var(--text2)">
+      <div><span style="color:var(--accent2)">DÉPL.</span> : Cliquez sur une case adjacente (surlignée)</div>
+      <div><span style="color:var(--wall-p)">MUR</span> : Mode "Mur" → cliquez entre 2 cases</div>
+      <div><span style="color:var(--accent)">SORT</span> : Sélectionnez un sort puis cliquez sur la cible</div>
+      <div><span style="color:var(--gold)">MUR H/V</span> : Alternez horizontal/vertical avec le bouton</div>
+    </div>
+  </div>
+  <div class="panel-box" style="width:100%;max-width:520px">
+    <h3>RÈGLES</h3>
+    <div style="font-family:'VT323',monospace;font-size:15px;line-height:1.8;color:var(--text2)">
+      <div>• Atteignez la rangée adverse en premier.</div>
+      <div>• Un mur couvre 2 cases.</div>
+      <div>• Impossible d'enfermer totalement un joueur.</div>
+      <div>• Si deux pions sont face à face : saut possible !</div>
+      <div>• L'IA gagne en intelligence selon le round.</div>
+    </div>
+  </div>
+  <div class="panel-box" style="width:100%;max-width:520px">
+    <h3>OBJECTIF</h3>
+    <div style="font-family:'VT323',monospace;font-size:15px;color:var(--text2);line-height:1.8">
+      <div><span style="color:var(--player)">VOUS</span> : démarrez en bas (y=6), allez vers y=0.</div>
+      <div><span style="color:var(--ai)">IA</span> : démarre en haut (y=0), va vers y=6.</div>
+      <div>Gagnez de l'or → achetez des sorts en boutique → montez en puissance !</div>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="showScreen('screen-title')">← RETOUR</button>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div id="screen-game" class="screen">
+
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+    <div class="panel-box">
+      <h3>RUN</h3>
+      <div class="run-progress" id="run-progress"></div>
+      <hr class="pixel-hr">
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <div class="hud-stat"><div class="label">ROUND</div><div class="value" id="hud-round" style="color:var(--gold)">1</div></div>
+        <div class="hud-stat"><div class="label">OR</div><div class="value" id="hud-gold" style="color:var(--gold)">0</div></div>
+      </div>
+    </div>
+
+    <div class="panel-box enemy-card">
+      <h3>ENNEMI</h3>
+      <span class="enemy-icon" id="enemy-icon">🤖</span>
+      <div class="enemy-name" id="enemy-name">SENTINELLE</div>
+      <div class="enemy-level" id="enemy-level">NIV.1 — PASSIF</div>
+      <hr class="pixel-hr">
+      <div class="stat-row"><span class="sk">MURS</span><span class="sv" id="ai-walls">5</span></div>
+      <div class="stat-row"><span class="sk">DIST.</span><span class="sv" id="ai-dist">—</span></div>
+    </div>
+
+    <div class="panel-box">
+      <h3>VOTRE POSITION</h3>
+      <div class="stat-row"><span class="sk">MURS</span><span class="sv" id="p-walls-stat">5</span></div>
+      <div class="stat-row"><span class="sk">DIST.</span><span class="sv" id="p-dist">—</span></div>
+      <div class="stat-row"><span class="sk">COORD.</span><span class="sv" id="p-coord">(3,6)</span></div>
+    </div>
+
+    <div class="panel-box">
+      <h3>TERRAIN</h3>
+      <div class="tile-legend">
+        <div class="tl-item"><div class="tl-dot" style="background:#3a6aff;border-color:#3a6aff"></div><span class="tl-label">Normal</span></div>
+        <div class="tl-item"><div class="tl-dot" style="background:#aaddff88;border-color:#aaddff"></div><span class="tl-label">Glace +1</span></div>
+        <div class="tl-item"><div class="tl-dot" style="background:#66441188;border-color:#884422"></div><span class="tl-label">Boue -1</span></div>
+        <div class="tl-item"><div class="tl-dot" style="background:#ff990088;border-color:#ffaa00"></div><span class="tl-label">Boost ×2</span></div>
+        <div class="tl-item"><div class="tl-dot" style="background:#33003388;border-color:#880088"></div><span class="tl-label">Trou ✖</span></div>
+      </div>
+    </div>
+
+    <button class="btn btn-red btn-sm" style="width:100%" onclick="confirmQuit()">✖ ABANDONNER</button>
+  </div>
+
+  <!-- CENTER -->
+  <div class="game-center">
+    <div class="round-display">ROUND <span id="round-label">1</span> / 8</div>
+
+    <div id="turn-indicator" class="turn-indicator player">▶ VOTRE TOUR</div>
+
+    <div class="board-container">
+      <canvas id="board-canvas" width="460" height="460"></canvas>
+    </div>
+
+    <!-- Mode buttons -->
+    <div class="mode-row">
+      <button class="mode-btn active" id="btn-move" onclick="setMode('move')">🦶 DÉPL.</button>
+      <button class="mode-btn" id="btn-wall" onclick="setMode('wall')">🧱 MUR</button>
+      <button class="mode-btn" id="btn-wall-dir" onclick="toggleWallDir()" style="border-color:var(--wall-p);color:var(--wall-p)">↔ HORIZ.</button>
+    </div>
+
+    <!-- Wall pips -->
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:6px;color:var(--text2)">MURS :</span>
+      <div class="walls-row" id="wall-pips"></div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-box" id="log-box" style="width:460px">
+      <div class="log-entry log-sys">★ Nouvelle partie — Bonne chance !</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+    <div class="panel-box">
+      <h3>SORTS ACTIFS</h3>
+      <div class="spell-grid" id="spell-grid-active"></div>
+    </div>
+    <div class="panel-box">
+      <h3>PASSIFS</h3>
+      <div id="spell-grid-passive" style="display:flex;flex-direction:column;gap:5px"></div>
+    </div>
+    <div class="panel-box">
+      <h3>EFFETS</h3>
+      <div id="status-effects" style="font-family:'VT323',monospace;font-size:14px;color:var(--text2)">Aucun</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== SHOP SCREEN ===== -->
+<div id="screen-shop" class="screen" style="flex-direction:column;align-items:center">
+  <div class="shop-title">🛒 BOUTIQUE</div>
+  <div class="shop-subtitle" id="shop-subtitle">ROUND TERMINÉ — ACHETEZ UN OBJET</div>
+  <div class="gold-display" id="shop-gold">💰 OR : 0</div>
+
+  <div class="shop-grid" id="shop-grid"></div>
+
+  <div class="shop-actions">
+    <button class="btn btn-sm" onclick="rerollShop()" id="btn-reroll">🔀 RELANCER (3💰)</button>
+    <button class="btn btn-primary btn-sm" onclick="skipShop()">PASSER →</button>
+  </div>
+
+  <div style="margin-top:16px;font-family:'VT323',monospace;font-size:14px;color:var(--text2);text-align:center">
+    Vous pouvez acheter UN seul objet par boutique.
+  </div>
+</div>
+
+<!-- ===== RESULT SCREEN ===== -->
+<div id="screen-result" class="screen" style="flex-direction:column;align-items:center;padding:20px">
+  <div class="result-title" id="result-title">VICTOIRE !</div>
+  <div style="font-family:'VT323',monospace;font-size:18px;color:var(--text2);margin-bottom:12px" id="result-subtitle"></div>
+
+  <div class="result-stats" id="result-stats"></div>
+
+  <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+    <button class="btn btn-primary btn-sm" id="btn-result-continue" onclick="continueAfterResult()">CONTINUER →</button>
+    <button class="btn btn-sm btn-red" onclick="showScreen('screen-title')">✖ MENU</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// GAME STATE
+// ================================================================
+const GRID = 7;
+const CELL_SIZE = 52;
+const WALL_THICKNESS = 8;
+const GAP = 6;
+const BOARD_OFFSET = 10;
+
+// Computed sizes
+const SLOT = CELL_SIZE + GAP;
+const BOARD_PX = BOARD_OFFSET * 2 + GRID * CELL_SIZE + (GRID - 1) * GAP;
+
+const canvas = document.getElementById('board-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = BOARD_PX;
+canvas.height = BOARD_PX;
+
+// ── Colors (sync with CSS vars) ──
+const C = {
+  bg: '#0a0c12', bg2: '#111520', bg3: '#1a1f2e',
+  panel: '#161b28', border: '#2a3350', border2: '#3a4a7a',
+  cell: '#141824', cellHover: '#1e2538', cellGoalP: '#1a3050', cellGoalA: '#3a1a1a',
+  player: '#5de4c7', playerGlow: '#5de4c7',
+  ai: '#ff6b6b', aiGlow: '#ff6b6b',
+  wallP: '#f7c948', wallAI: '#ff6b6b',
+  ghost: '#f7c94866',
+  ice: '#aaddff33', iceBorder: '#aaddffaa',
+  mud: '#66441133', mudBorder: '#884422aa',
+  boost: '#ff990033', boostBorder: '#ffaa00aa',
+  hole: '#33003355', holeBorder: '#880088aa',
+  text: '#c8d8ff', text2: '#7a8fb8',
+  moveHighlight: '#5de4c722', moveBorder: '#5de4c766',
+  green: '#5de48a',
+};
+
+// ── Game Data ──
+let G = {}; // game state
+
+function initGame() {
+  G = {
+    round: 1,
+    maxRounds: 8,
+    gold: 0,
+    playerPos: { x: 3, y: 6 },
+    aiPos: { x: 3, y: 0 },
+    playerWalls: 5,
+    aiWalls: 5,
+    playerMaxWalls: 5,
+    walls: [], // { x1,y1,x2,y2 } — segments blocked (between adjacent cells)
+    tiles: [], // 7x7 array of tile types: 'normal','ice','mud','boost','hole'
+    mode: 'move', // 'move','wall','spell'
+    wallDir: 'h', // 'h' or 'v'
+    turn: 'player', // 'player','ai'
+    activeSpell: null,
+    spells: { active: [], passive: [] },
+    statusEffects: { playerFrozen: false, aiFrozen: false, playerShield: false, aiShield: false },
+    aiLevel: 1,
+    hoverCell: null,
+    hoverWall: null,
+    gameOver: false,
+    roundStartTime: Date.now(),
+    spellsUsedThisRound: new Set(),
+    enemies: buildEnemyList(),
+    shopBought: false,
+    rerollsUsed: 0,
+  };
+  G.tiles = buildTiles(G.round);
+  buildBoard();
+  renderAll();
+  updateHUD();
+  buildSpellUI();
+  buildRunProgress();
+}
+
+function buildEnemyList() {
+  return [
+    { icon: '🤖', name: 'SENTINELLE', level: 1, desc: 'PASSIF — Fonce tout droit', walls: 4, isBoss: false },
+    { icon: '🦾', name: 'GÂCHETTE', level: 2, desc: 'RÉACTIF — Bloque si en retard', walls: 5, isBoss: false },
+    { icon: '👁️', name: 'SCRUTATEUR', level: 2, desc: 'RÉACTIF — Pose des murs aggressifs', walls: 6, isBoss: false },
+    { icon: '⚙️', name: 'TACTICIEN', level: 3, desc: 'STRATÈGE — Double poseur', walls: 7, isBoss: false },
+    { icon: '🧿', name: 'ŒIL NOIR', level: 3, desc: 'STRATÈGE — Analyse à 2 tours', walls: 7, isBoss: false },
+    { icon: '🔮', name: 'ORACLE', level: 3, desc: 'STRATÈGE — Prédit vos moves', walls: 8, isBoss: false },
+    { icon: '💀', name: 'NÉCRONAUTE', level: 4, desc: 'BOSS — Téléportation + 2 murs/tour', walls: 10, isBoss: true },
+    { icon: '👾', name: 'OMNIVORE', level: 4, desc: 'BOSS FINAL — Omniscient', walls: 12, isBoss: true },
+  ];
+}
+
+// ── Tile system ──
+function buildTiles(round) {
+  const tiles = Array.from({ length: GRID }, () => Array(GRID).fill('normal'));
+  const numSpecial = Math.min(2 + Math.floor(round / 2), 8);
+  const types = ['ice', 'mud', 'boost', 'hole'];
+  for (let i = 0; i < numSpecial; i++) {
+    let x, y, tries = 0;
+    do {
+      x = Math.floor(Math.random() * GRID);
+      y = Math.floor(Math.random() * GRID);
+      tries++;
+    } while ((tiles[y][x] !== 'normal' ||
+      (x === 3 && y === 6) || (x === 3 && y === 0) ||
+      (x === 3 && (y === 1 || y === 5))) && tries < 50);
+    if (tries < 50) tiles[y][x] = types[Math.floor(Math.random() * types.length)];
+  }
+  return tiles;
+}
+
+// ================================================================
+// PATHFINDING (BFS)
+// ================================================================
+function bfs(startX, startY, goalY, walls, tiles, blocked = null) {
+  const visited = new Set();
+  const queue = [{ x: startX, y: startY, dist: 0, path: [{ x: startX, y: startY }] }];
+  const key = (x, y) => `${x},${y}`;
+  visited.add(key(startX, startY));
+
+  while (queue.length) {
+    const cur = queue.shift();
+    if (cur.y === goalY) return { dist: cur.dist, path: cur.path };
+
+    const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+    for (const d of dirs) {
+      const nx = cur.x + d.dx, ny = cur.y + d.dy;
+      if (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID) continue;
+      if (blocked && nx === blocked.x && ny === blocked.y) continue;
+      if (tiles && tiles[ny] && tiles[ny][nx] === 'hole') continue;
+      if (isWallBetween(cur.x, cur.y, nx, ny, walls)) continue;
+      const k = key(nx, ny);
+      if (!visited.has(k)) {
+        visited.add(k);
+        queue.push({ x: nx, y: ny, dist: cur.dist + 1, path: [...cur.path, { x: nx, y: ny }] });
+      }
+    }
+  }
+  return null;
+}
+
+function isWallBetween(x1, y1, x2, y2, walls) {
+  for (const w of walls) {
+    if (w.x1 === x1 && w.y1 === y1 && w.x2 === x2 && w.y2 === y2) return true;
+    if (w.x1 === x2 && w.y1 === y2 && w.x2 === x1 && w.y2 === y1) return true;
+  }
+  return false;
+}
+
+// Check if placing a wall segment blocks any path
+function wallBlocksPath(newWalls, playerPos, aiPos, tiles) {
+  const allWalls = [...G.walls, ...newWalls];
+  const pPath = bfs(playerPos.x, playerPos.y, 0, allWalls, tiles);
+  const aPath = bfs(aiPos.x, aiPos.y, 6, allWalls, tiles);
+  return !pPath || !aPath;
+}
+
+// Get wall segments for a 2-long wall placement
+function getWallSegments(cx, cy, dir) {
+  // cx,cy = cell where wall starts (between cells)
+  // dir: 'h' = horizontal wall (blocks north-south movement between row cy and cy+1)
+  //      'v' = vertical wall (blocks east-west movement between col cx and cx+1)
+  const segs = [];
+  if (dir === 'h') {
+    // Wall between (cx,cy) and (cx,cy+1), and between (cx+1,cy) and (cx+1,cy+1)
+    if (cx >= 0 && cx < GRID && cy >= 0 && cy < GRID - 1) {
+      segs.push({ x1: cx, y1: cy, x2: cx, y2: cy + 1 });
+    }
+    if (cx + 1 >= 0 && cx + 1 < GRID && cy >= 0 && cy < GRID - 1) {
+      segs.push({ x1: cx + 1, y1: cy, x2: cx + 1, y2: cy + 1 });
+    }
+  } else {
+    // Wall between (cx,cy) and (cx+1,cy), and between (cx,cy+1) and (cx+1,cy+1)
+    if (cx >= 0 && cx < GRID - 1 && cy >= 0 && cy < GRID) {
+      segs.push({ x1: cx, y1: cy, x2: cx + 1, y2: cy });
+    }
+    if (cx >= 0 && cx < GRID - 1 && cy + 1 >= 0 && cy + 1 < GRID) {
+      segs.push({ x1: cx, y1: cy + 1, x2: cx + 1, y2: cy + 1 });
+    }
+  }
+  return segs;
+}
+
+// ================================================================
+// DRAWING
+// ================================================================
+function cellToPixel(x, y) {
+  return {
+    px: BOARD_OFFSET + x * SLOT,
+    py: BOARD_OFFSET + y * SLOT,
+  };
+}
+
+function pixelToCell(px, py) {
+  const gx = (px - BOARD_OFFSET) / SLOT;
+  const gy = (py - BOARD_OFFSET) / SLOT;
+  return { x: Math.round(gx), y: Math.round(gy), fx: gx, fy: gy };
+}
+
+function renderAll() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = C.bg2;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Subtle checker
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      const { px, py } = cellToPixel(x, y);
+      if ((x + y) % 2 === 0) {
+        ctx.fillStyle = '#ffffff04';
+        ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+      }
+    }
+  }
+
+  // Goal rows
+  for (let x = 0; x < GRID; x++) {
+    const tp = cellToPixel(x, 0);
+    ctx.fillStyle = '#1a3050';
+    ctx.fillRect(tp.px, tp.py, CELL_SIZE, CELL_SIZE);
+    const ta = cellToPixel(x, GRID - 1);
+    ctx.fillStyle = '#3a1a1a';
+    ctx.fillRect(ta.px, ta.py, CELL_SIZE, CELL_SIZE);
+  }
+
+  // Draw cells
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      drawCell(x, y);
+    }
+  }
+
+  // Valid moves highlight
+  if (G.mode === 'move' && G.turn === 'player' && !G.gameOver) {
+    getValidMoves(G.playerPos, G.aiPos).forEach(m => drawMoveHighlight(m.x, m.y));
+  }
+
+  // Spell target highlight
+  if (G.mode === 'spell' && G.activeSpell && G.turn === 'player') {
+    drawSpellTargets(G.activeSpell);
+  }
+
+  // Ghost wall preview
+  if (G.mode === 'wall' && G.hoverWall && G.turn === 'player') {
+    drawGhostWall(G.hoverWall.x, G.hoverWall.y, G.hoverWall.dir);
+  }
+
+  // Walls
+  for (const w of G.walls) {
+    drawWallSegment(w);
+  }
+
+  // Pieces
+  drawPiece(G.aiPos.x, G.aiPos.y, 'ai');
+  drawPiece(G.playerPos.x, G.playerPos.y, 'player');
+
+  // Goal arrows
+  drawGoalArrows();
+}
+
+function drawCell(x, y) {
+  const { px, py } = cellToPixel(x, y);
+  const tile = G.tiles[y][x];
+
+  // Base cell
+  ctx.fillStyle = C.cell;
+  ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+
+  // Tile overlays
+  if (tile === 'ice') {
+    ctx.fillStyle = C.ice;
+    ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+    ctx.strokeStyle = C.iceBorder;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 1, py + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+    ctx.fillStyle = '#aaddff88';
+    ctx.font = '12px serif';
+    ctx.fillText('❄', px + CELL_SIZE / 2 - 6, py + CELL_SIZE / 2 + 4);
+  } else if (tile === 'mud') {
+    ctx.fillStyle = C.mud;
+    ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+    ctx.strokeStyle = C.mudBorder;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 1, py + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+    ctx.fillStyle = '#88441266';
+    ctx.font = '12px serif';
+    ctx.fillText('🟫', px + CELL_SIZE / 2 - 6, py + CELL_SIZE / 2 + 4);
+  } else if (tile === 'boost') {
+    ctx.fillStyle = C.boost;
+    ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+    ctx.strokeStyle = C.boostBorder;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 1, py + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+    ctx.fillStyle = '#ffaa0088';
+    ctx.font = '12px serif';
+    ctx.fillText('⚡', px + CELL_SIZE / 2 - 6, py + CELL_SIZE / 2 + 4);
+  } else if (tile === 'hole') {
+    ctx.fillStyle = C.hole;
+    ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+    ctx.strokeStyle = C.holeBorder;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 1, py + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+    ctx.fillStyle = '#88008888';
+    ctx.font = '16px serif';
+    ctx.fillText('✖', px + CELL_SIZE / 2 - 8, py + CELL_SIZE / 2 + 6);
+  }
+
+  // Pixel border
+  ctx.strokeStyle = C.border;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
+}
+
+function drawPiece(x, y, who) {
+  const { px, py } = cellToPixel(x, y);
+  const cx = px + CELL_SIZE / 2;
+  const cy = py + CELL_SIZE / 2;
+  const r = 16;
+  const color = who === 'player' ? C.player : C.ai;
+
+  // Glow
+  const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r + 10);
+  grd.addColorStop(0, color + '55');
+  grd.addColorStop(1, 'transparent');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body (pixel art style — diamond shape)
+  ctx.fillStyle = color;
+  // Draw pixel diamond
+  const s = 14;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s);
+  ctx.lineTo(cx + s, cy);
+  ctx.lineTo(cx, cy + s);
+  ctx.lineTo(cx - s, cy);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner highlight
+  ctx.fillStyle = '#ffffff55';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - s + 4);
+  ctx.lineTo(cx + 4, cy - 2);
+  ctx.lineTo(cx, cy - 6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Status: frozen
+  if ((who === 'player' && G.statusEffects.playerFrozen) ||
+    (who === 'ai' && G.statusEffects.aiFrozen)) {
+    ctx.strokeStyle = '#aaddff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#aaddff44';
+    ctx.fill();
+  }
+
+  // Shield
+  if ((who === 'player' && G.statusEffects.playerShield) ||
+    (who === 'ai' && G.statusEffects.aiShield)) {
+    ctx.strokeStyle = '#5de48a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function drawMoveHighlight(x, y) {
+  const { px, py } = cellToPixel(x, y);
+  ctx.fillStyle = C.moveHighlight;
+  ctx.fillRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+  ctx.strokeStyle = C.moveBorder;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([3, 3]);
+  ctx.strokeRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+  ctx.setLineDash([]);
+}
+
+function drawWallSegment(w) {
+  drawSingleWallSeg(w.x1, w.y1, w.x2, w.y2, w.owner || 'player');
+}
+
+function drawSingleWallSeg(x1, y1, x2, y2, owner) {
+  const p1 = cellToPixel(x1, y1);
+  const p2 = cellToPixel(x2, y2);
+  const color = owner === 'ai' ? C.wallAI : C.wallP;
+
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+
+  if (x1 === x2) {
+    // vertical neighbors => horizontal wall between them
+    const wallY = Math.min(p1.py, p2.py) + CELL_SIZE;
+    ctx.fillRect(p1.px - 2, wallY, CELL_SIZE + 4, GAP);
+  } else {
+    // horizontal neighbors => vertical wall between them
+    const wallX = Math.min(p1.px, p2.px) + CELL_SIZE;
+    ctx.fillRect(wallX, p1.py - 2, GAP, CELL_SIZE + 4);
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawGhostWall(cx, cy, dir) {
+  const segs = getWallSegments(cx, cy, dir);
+  ctx.fillStyle = C.ghost;
+  for (const s of segs) {
+    const p1 = cellToPixel(s.x1, s.y1);
+    const p2 = cellToPixel(s.x2, s.y2);
+    if (s.x1 === s.x2) {
+      const wallY = Math.min(p1.py, p2.py) + CELL_SIZE;
+      ctx.fillRect(p1.px - 2, wallY, CELL_SIZE + 4, GAP);
+    } else {
+      const wallX = Math.min(p1.px, p2.px) + CELL_SIZE;
+      ctx.fillRect(wallX, p1.py - 2, GAP, CELL_SIZE + 4);
+    }
+  }
+}
+
+function drawGoalArrows() {
+  // Player goal (top row)
+  ctx.fillStyle = C.player + '88';
+  ctx.font = '10px serif';
+  ctx.fillText('▲ OBJECTIF', BOARD_OFFSET + 2, BOARD_OFFSET - 2);
+
+  // AI goal (bottom row)
+  ctx.fillStyle = C.ai + '88';
+  ctx.fillText('▼ OBJECTIF', BOARD_OFFSET + 2, BOARD_OFFSET + GRID * SLOT + 2);
+}
+
+function drawSpellTargets(spellId) {
+  const spell = SPELLS[spellId];
+  if (!spell) return;
+  spell.getTargets(G).forEach(({ x, y }) => {
+    const { px, py } = cellToPixel(x, y);
+    ctx.fillStyle = '#7c5de433';
+    ctx.fillRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+    ctx.strokeStyle = '#7c5de4cc';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([2, 2]);
+    ctx.strokeRect(px + 2, py + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+    ctx.setLineDash([]);
+  });
+}
+
+// ================================================================
+// MOVEMENT LOGIC
+// ================================================================
+function getValidMoves(playerPos, otherPos) {
+  const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+  const moves = [];
+  for (const d of dirs) {
+    let nx = playerPos.x + d.dx, ny = playerPos.y + d.dy;
+    if (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID) continue;
+    if (G.tiles[ny][nx] === 'hole') continue;
+    if (isWallBetween(playerPos.x, playerPos.y, nx, ny, G.walls)) continue;
+
+    // Check if other pawn is there
+    if (nx === otherPos.x && ny === otherPos.y) {
+      // Jump
+      const jx = nx + d.dx, jy = ny + d.dy;
+      if (jx >= 0 && jx < GRID && jy >= 0 && jy < GRID &&
+        !isWallBetween(nx, ny, jx, jy, G.walls) &&
+        G.tiles[jy] && G.tiles[jy][jx] !== 'hole') {
+        moves.push({ x: jx, y: jy });
+      }
+    } else {
+      moves.push({ x: nx, y: ny });
+    }
+  }
+  return moves;
+}
+
+// ================================================================
+// SPELLS DATA
+// ================================================================
+const SPELLS = {
+  ghost: {
+    name: '👻 Fantôme',
+    icon: '👻',
+    type: 'active',
+    desc: 'Traversez un mur pour vous déplacer dans une direction.',
+    uses: 1,
+    getTargets(g) {
+      const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+      return dirs.map(d => ({ x: g.playerPos.x + d.dx, y: g.playerPos.y + d.dy }))
+        .filter(p => p.x >= 0 && p.x < GRID && p.y >= 0 && p.y < GRID && G.tiles[p.y][p.x] !== 'hole');
+    },
+    onUse(g, tx, ty) {
+      g.playerPos = { x: tx, y: ty };
+      addLog(`👻 Sort Fantôme — traversée vers (${tx},${ty})!`, 'player');
+      return true;
+    }
+  },
+  explosion: {
+    name: '💥 Explosion',
+    icon: '💥',
+    type: 'active',
+    desc: 'Détruisez un mur adverse adjacent à votre position.',
+    uses: 1,
+    getTargets(g) {
+      const targets = [];
+      const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+      for (const d of dirs) {
+        const nx = g.playerPos.x + d.dx, ny = g.playerPos.y + d.dy;
+        if (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID) continue;
+        if (isWallBetween(g.playerPos.x, g.playerPos.y, nx, ny, g.walls)) targets.push({ x: nx, y: ny });
+      }
+      return targets;
+    },
+    onUse(g, tx, ty) {
+      const before = g.walls.length;
+      g.walls = g.walls.filter(w => {
+        const between = (w.x1 === g.playerPos.x && w.y1 === g.playerPos.y && w.x2 === tx && w.y2 === ty) ||
+          (w.x1 === tx && w.y1 === ty && w.x2 === g.playerPos.x && w.y2 === g.playerPos.y);
+        return !between;
+      });
+      if (g.walls.length < before) { addLog('💥 Mur détruit !', 'player'); return true; }
+      addLog('💥 Aucun mur adjacent.', 'warn'); return false;
+    }
+  },
+  push: {
+    name: '🌀 Poussée',
+    icon: '🌀',
+    type: 'active',
+    desc: "Repoussez l'adversaire d'une case dans une direction libre.",
+    uses: 1,
+    getTargets(g) {
+      const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+      return dirs.map(d => ({ x: g.aiPos.x + d.dx, y: g.aiPos.y + d.dy }))
+        .filter(p => p.x >= 0 && p.x < GRID && p.y >= 0 && p.y < GRID && G.tiles[p.y][p.x] !== 'hole' &&
+          !isWallBetween(g.aiPos.x, g.aiPos.y, p.x, p.y, g.walls));
+    },
+    onUse(g, tx, ty) {
+      if (g.statusEffects.aiShield) { g.statusEffects.aiShield = false; addLog('🛡️ Bouclier ennemi absorbe la poussée !', 'warn'); return true; }
+      g.aiPos = { x: tx, y: ty }; addLog(`🌀 IA repoussée vers (${tx},${ty})!`, 'player'); return true;
+    }
+  },
+  sprint: {
+    name: '⚡ Sprint',
+    icon: '⚡',
+    type: 'active',
+    desc: 'Avancez de 2 cases en ligne droite ce tour.',
+    uses: 1,
+    getTargets(g) {
+      const dirs = [{ dx: 0, dy: -2 }, { dx: 0, dy: 2 }];
+      return dirs.map(d => ({ x: g.playerPos.x + d.dx, y: g.playerPos.y + d.dy }))
+        .filter(p => p.x >= 0 && p.x < GRID && p.y >= 0 && p.y < GRID && G.tiles[p.y][p.x] !== 'hole');
+    },
+    onUse(g, tx, ty) {
+      g.playerPos = { x: tx, y: ty }; addLog(`⚡ Sprint vers (${tx},${ty})!`, 'player'); return true;
+    }
+  },
+  swap: {
+    name: '🔄 Échange',
+    icon: '🔄',
+    type: 'active',
+    desc: 'Échangez votre position avec celle de l\'adversaire.',
+    uses: 1,
+    getTargets(g) { return [{ x: g.aiPos.x, y: g.aiPos.y }]; },
+    onUse(g, tx, ty) {
+      if (g.statusEffects.aiShield) { g.statusEffects.aiShield = false; addLog('🛡️ Bouclier ennemi annule l\'échange !', 'warn'); return true; }
+      const tmp = { ...g.playerPos };
+      g.playerPos = { ...g.aiPos };
+      g.aiPos = tmp;
+      addLog('🔄 Positions échangées !', 'player'); return true;
+    }
+  },
+  teleport: {
+    name: '🌀 Téléport',
+    icon: '🌀✨',
+    type: 'active',
+    desc: 'Téléportez-vous n\'importe où sur le plateau.',
+    uses: 1,
+    getTargets(g) {
+      const targets = [];
+      for (let y = 0; y < GRID; y++) for (let x = 0; x < GRID; x++) {
+        if (G.tiles[y][x] !== 'hole' && !(x === g.aiPos.x && y === g.aiPos.y) && !(x === g.playerPos.x && y === g.playerPos.y))
+          targets.push({ x, y });
+      }
+      return targets;
+    },
+    onUse(g, tx, ty) {
+      g.playerPos = { x: tx, y: ty }; addLog(`🌀 Téléportation vers (${tx},${ty})!`, 'player'); return true;
+    }
+  },
+  shield: {
+    name: '🛡️ Bouclier',
+    icon: '🛡️',
+    type: 'passive_active',
+    desc: 'Blocage du prochain sort adverse.',
+    uses: 1,
+    getTargets(g) { return [{ x: g.playerPos.x, y: g.playerPos.y }]; },
+    onUse(g) { g.statusEffects.playerShield = true; addLog('🛡️ Bouclier activé !', 'player'); return true; }
+  },
+  magnet: {
+    name: '🧲 Aimant',
+    icon: '🧲',
+    type: 'active',
+    desc: 'Attirez l\'adversaire d\'une case vers vous.',
+    uses: 1,
+    getTargets(g) { return [{ x: g.aiPos.x, y: g.aiPos.y }]; },
+    onUse(g) {
+      if (g.statusEffects.aiShield) { g.statusEffects.aiShield = false; addLog('🛡️ Bouclier ennemi bloque l\'aimant !', 'warn'); return true; }
+      const dx = Math.sign(g.playerPos.x - g.aiPos.x);
+      const dy = Math.sign(g.playerPos.y - g.aiPos.y);
+      const nx = g.aiPos.x + dx, ny = g.aiPos.y + dy;
+      if (nx >= 0 && nx < GRID && ny >= 0 && ny < GRID && G.tiles[ny][nx] !== 'hole' &&
+        !isWallBetween(g.aiPos.x, g.aiPos.y, nx, ny, g.walls)) {
+        g.aiPos = { x: nx, y: ny }; addLog('🧲 IA attirée !', 'player');
+      } else { addLog('🧲 Aimant sans effet.', 'warn'); }
+      return true;
+    }
+  },
+  mason: {
+    name: '🧱 Maçon',
+    icon: '🧱',
+    type: 'passive',
+    desc: 'Gagnez 2 barrières sup. à chaque round.',
+    passive: true,
+    effect(g) { g.playerMaxWalls += 2; g.playerWalls += 2; }
+  },
+  freeze: {
+    name: '❄️ Gel',
+    icon: '❄️',
+    type: 'active',
+    desc: 'L\'adversaire passe son prochain tour.',
+    uses: 1,
+    getTargets(g) { return [{ x: g.aiPos.x, y: g.aiPos.y }]; },
+    onUse(g) {
+      if (g.statusEffects.aiShield) { g.statusEffects.aiShield = false; addLog('🛡️ Bouclier ennemi annule le gel !', 'warn'); return true; }
+      g.statusEffects.aiFrozen = true; addLog('❄️ IA gelée — passe son prochain tour !', 'player'); return true;
+    }
+  }
+};
+
+// Active spell IDs (can be bought/offered)
+const ALL_SPELL_IDS = Object.keys(SPELLS);
+
+// ================================================================
+// SHOP DATA
+// ================================================================
+const SHOP_ITEMS = [
+  { id: 'wall+1', icon: '🧱', name: '+1 MUR MAX', type: 'STAT', desc: 'Votre stock de murs max +1', cost: 3, apply(g) { g.playerMaxWalls++; g.playerWalls++; } },
+  { id: 'wall+2', icon: '🧱🧱', name: '+2 MURS MAX', type: 'STAT', desc: 'Stock de murs +2', cost: 5, apply(g) { g.playerMaxWalls += 2; g.playerWalls += 2; } },
+  { id: 'refund', icon: '💸', name: 'BOURSE', type: 'PASSIF', desc: 'Chaque mur ennemi vous rapporte 1 or', cost: 4, apply(g) { g.spells.passive.push('refund'); } },
+  { id: 'ghost', icon: '👻', name: 'FANTÔME', type: 'ACTIF', desc: SPELLS.ghost.desc, cost: 5, apply(g) { addSpell(g, 'ghost'); } },
+  { id: 'explosion', icon: '💥', name: 'EXPLOSION', type: 'ACTIF', desc: SPELLS.explosion.desc, cost: 5, apply(g) { addSpell(g, 'explosion'); } },
+  { id: 'push', icon: '🌀', name: 'POUSSÉE', type: 'ACTIF', desc: SPELLS.push.desc, cost: 4, apply(g) { addSpell(g, 'push'); } },
+  { id: 'sprint', icon: '⚡', name: 'SPRINT', type: 'ACTIF', desc: SPELLS.sprint.desc, cost: 4, apply(g) { addSpell(g, 'sprint'); } },
+  { id: 'swap', icon: '🔄', name: 'ÉCHANGE', type: 'ACTIF', desc: SPELLS.swap.desc, cost: 6, apply(g) { addSpell(g, 'swap'); } },
+  { id: 'teleport', icon: '🌀✨', name: 'TÉLÉPORT', type: 'ACTIF', desc: SPELLS.teleport.desc, cost: 7, apply(g) { addSpell(g, 'teleport'); } },
+  { id: 'shield', icon: '🛡️', name: 'BOUCLIER', type: 'ACTIF', desc: SPELLS.shield.desc, cost: 5, apply(g) { addSpell(g, 'shield'); } },
+  { id: 'magnet', icon: '🧲', name: 'AIMANT', type: 'ACTIF', desc: SPELLS.magnet.desc, cost: 4, apply(g) { addSpell(g, 'magnet'); } },
+  { id: 'mason', icon: '🧱', name: 'MAÇON', type: 'PASSIF', desc: SPELLS.mason.desc, cost: 4, apply(g) { addSpell(g, 'mason'); } },
+  { id: 'freeze', icon: '❄️', name: 'GEL', type: 'ACTIF', desc: SPELLS.freeze.desc, cost: 5, apply(g) { addSpell(g, 'freeze'); } },
+  { id: 'extrawall', icon: '🔧', name: 'MURS BONUS', type: 'PASSIF', desc: 'Commencez chaque round avec 2 murs supplémentaires', cost: 4, apply(g) { g.spells.passive.push('extrawall'); } },
+];
+
+function addSpell(g, id) {
+  const spell = SPELLS[id];
+  if (spell && spell.passive) { g.spells.passive.push(id); if (spell.effect) spell.effect(g); }
+  else if (!g.spells.active.includes(id)) g.spells.active.push(id);
+}
+
+// ================================================================
+// AI LOGIC
+// ================================================================
+function aiTurn() {
+  if (G.statusEffects.aiFrozen) {
+    G.statusEffects.aiFrozen = false;
+    addLog('❄️ IA gelée — passe son tour.', 'ai');
+    setTimeout(endAITurn, 600);
+    return;
+  }
+
+  const enemy = G.enemies[Math.min(G.round - 1, G.enemies.length - 1)];
+  const level = enemy.level;
+  const isBoss = enemy.isBoss;
+
+  setTimeout(() => {
+    if (G.gameOver) return;
+
+    // Boss: teleport randomly every 3rd action
+    if (isBoss && Math.random() < 0.3) {
+      bossSpecialAction(enemy);
+      return;
+    }
+
+    const pDist = bfs(G.playerPos.x, G.playerPos.y, 0, G.walls, G.tiles);
+    const aDist = bfs(G.aiPos.x, G.aiPos.y, 6, G.walls, G.tiles);
+    if (!aDist) { endAITurn(); return; }
+
+    let didWall = false;
+
+    // Wall placement logic
+    if (G.aiWalls > 0 && level >= 2) {
+      const shouldPlaceWall = (level === 2 && pDist && pDist.dist < aDist.dist) ||
+        level >= 3 || (isBoss && Math.random() < 0.8);
+
+      if (shouldPlaceWall) {
+        didWall = tryAIPlaceWall(pDist);
+      }
+      // Boss places 2 walls
+      if (isBoss && G.aiWalls > 0 && didWall) {
+        tryAIPlaceWall(pDist);
+      }
+    }
+
+    if (!didWall) {
+      aiMove(aDist);
+    } else {
+      // After wall, also move
+      setTimeout(() => {
+        const aDist2 = bfs(G.aiPos.x, G.aiPos.y, 6, G.walls, G.tiles);
+        if (aDist2) aiMove(aDist2);
+        else endAITurn();
+      }, 300);
+    }
+  }, 800 + Math.random() * 400);
+}
+
+function bossSpecialAction(enemy) {
+  if (enemy.name === 'NÉCRONAUTE') {
+    // Teleport to random position
+    let nx, ny, tries = 0;
+    do {
+      nx = Math.floor(Math.random() * GRID);
+      ny = Math.floor(Math.random() * (GRID - 2));
+      tries++;
+    } while ((G.tiles[ny][nx] === 'hole' || (nx === G.playerPos.x && ny === G.playerPos.y)) && tries < 30);
+    G.aiPos = { x: nx, y: ny };
+    addLog('💀 NÉCRONAUTE se téléporte !', 'ai');
+    renderAll();
+    setTimeout(endAITurn, 500);
+  } else {
+    aiMove(bfs(G.aiPos.x, G.aiPos.y, 6, G.walls, G.tiles));
+  }
+}
+
+function tryAIPlaceWall(pDist) {
+  if (!pDist || !pDist.path || pDist.path.length < 2 || G.aiWalls <= 0) return false;
+
+  // Try to place a wall on the player's shortest path
+  for (let i = 0; i < pDist.path.length - 1 && i < 3; i++) {
+    const seg1 = pDist.path[i], seg2 = pDist.path[i + 1];
+    const dir = seg1.x === seg2.x ? 'h' : 'v';
+    const wx = Math.min(seg1.x, seg2.x), wy = Math.min(seg1.y, seg2.y);
+
+    const segs = getWallSegments(wx, wy, dir);
+    if (segs.length < 2) continue;
+
+    // Check no overlap
+    const overlap = segs.some(s => isWallBetween(s.x1, s.y1, s.x2, s.y2, G.walls));
+    if (overlap) continue;
+
+    if (!wallBlocksPath(segs, G.playerPos, G.aiPos, G.tiles)) {
+      for (const s of segs) { s.owner = 'ai'; G.walls.push(s); }
+      G.aiWalls--;
+      // Passive refund
+      if (G.spells.passive.includes('refund')) { G.gold++; addLog('💸 Mur ennemi → +1 or', 'sys'); }
+      addLog(`IA pose un mur en (${wx},${wy}) ${dir === 'h' ? '↔' : '↕'}`, 'ai');
+      renderAll(); updateHUD();
+      return true;
+    }
+  }
+  return false;
+}
+
+function aiMove(pathData) {
+  if (!pathData || !pathData.path || pathData.path.length < 2) { endAITurn(); return; }
+  const next = pathData.path[1];
+
+  // Check if player is there (jump)
+  if (next.x === G.playerPos.x && next.y === G.playerPos.y) {
+    const dir = { dx: next.x - G.aiPos.x, dy: next.y - G.aiPos.y };
+    const jx = next.x + dir.dx, jy = next.y + dir.dy;
+    if (jx >= 0 && jx < GRID && jy >= 0 && jy < GRID && G.tiles[jy][jx] !== 'hole' &&
+      !isWallBetween(next.x, next.y, jx, jy, G.walls)) {
+      G.aiPos = { x: jx, y: jy };
+      addLog(`IA saute vers (${jx},${jy})`, 'ai');
+    } else { endAITurn(); return; }
+  } else {
+    // Tile effects on AI
+    const tile = G.tiles[next.y][next.x];
+    if (tile === 'hole') { endAITurn(); return; }
+    G.aiPos = { x: next.x, y: next.y };
+    addLog(`IA avance vers (${next.x},${next.y})`, 'ai');
+  }
+
+  renderAll();
+  checkWinCondition();
+  if (!G.gameOver) endAITurn();
+}
+
+function endAITurn() {
+  G.turn = 'player';
+  G.spellsUsedThisRound = new Set();
+  updateHUD();
+  renderAll();
+  updateTurnIndicator();
+}
+
+// ================================================================
+// INPUT HANDLING
+// ================================================================
+canvas.addEventListener('mousemove', (e) => {
+  if (G.turn !== 'player' || G.gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const { x, y, fx, fy } = pixelToCell(mx, my);
+
+  if (G.mode === 'wall') {
+    // Determine which side of cell we're near
+    const cellFx = (mx - BOARD_OFFSET) / SLOT;
+    const cellFy = (my - BOARD_OFFSET) / SLOT;
+    const fracX = cellFx - Math.floor(cellFx);
+    const fracY = cellFy - Math.floor(cellFy);
+    const cx = Math.floor(cellFx);
+    const cy = Math.floor(cellFy);
+
+    G.hoverWall = { x: cx, y: cy, dir: G.wallDir };
+    renderAll();
+  } else {
+    G.hoverCell = { x, y };
+    renderAll();
+  }
+});
+
+canvas.addEventListener('mouseleave', () => { G.hoverWall = null; G.hoverCell = null; renderAll(); });
+
+canvas.addEventListener('click', (e) => {
+  if (G.turn !== 'player' || G.gameOver) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const { x, y } = pixelToCell(mx, my);
+
+  if (G.mode === 'move') {
+    const valid = getValidMoves(G.playerPos, G.aiPos);
+    const target = valid.find(m => m.x === x && m.y === y);
+    if (target) {
+      doPlayerMove(target.x, target.y);
+    }
+  } else if (G.mode === 'wall') {
+    const cellFx = (mx - BOARD_OFFSET) / SLOT;
+    const cellFy = (my - BOARD_OFFSET) / SLOT;
+    const cx = Math.floor(cellFx);
+    const cy = Math.floor(cellFy);
+    doPlayerWall(cx, cy, G.wallDir);
+  } else if (G.mode === 'spell' && G.activeSpell) {
+    doPlayerSpell(G.activeSpell, x, y);
+  }
+});
+
+function doPlayerMove(tx, ty) {
+  const tile = G.tiles[ty][tx];
+  let extraMove = false;
+
+  if (tile === 'mud') {
+    // Mud: skip next step
+    addLog('🟫 Boue ! Déplacement ralenti — fin du tour.', 'sys');
+  } else if (tile === 'ice') {
+    // Ice: move an extra step next turn (simplified: just log)
+    addLog('❄ Glace ! Bonus : déplacez-vous encore.', 'sys');
+    extraMove = true;
+  } else if (tile === 'boost') {
+    addLog('⚡ Case boost ! Energie +1 or.', 'sys');
+    G.gold += 1;
+  }
+
+  G.playerPos = { x: tx, y: ty };
+  addLog(`Vous avancez vers (${tx},${ty})`, 'player');
+
+  if (tile === 'ice' && extraMove) {
+    renderAll(); updateHUD();
+    // Allow another move
+    const valid2 = getValidMoves(G.playerPos, G.aiPos);
+    if (valid2.length > 0) return; // player can click again — don't end turn yet
+    // No moves, fall through
+  }
+
+  renderAll(); updateHUD();
+  checkWinCondition();
+  if (!G.gameOver) { endPlayerTurn(); }
+}
+
+function doPlayerWall(cx, cy, dir) {
+  if (G.playerWalls <= 0) { showNotif('Plus de murs !'); return; }
+  const segs = getWallSegments(cx, cy, dir);
+  if (segs.length < 2) { showNotif('Position invalide'); return; }
+
+  const overlap = segs.some(s => G.walls.some(w =>
+    (w.x1 === s.x1 && w.y1 === s.y1 && w.x2 === s.x2 && w.y2 === s.y2) ||
+    (w.x1 === s.x2 && w.y1 === s.y2 && w.x2 === s.x1 && w.y2 === s.y1)
+  ));
+  if (overlap) { showNotif('Mur déjà là !'); return; }
+
+  if (wallBlocksPath(segs, G.playerPos, G.aiPos, G.tiles)) {
+    showNotif('Illégal : chemin bloqué !'); return;
+  }
+
+  for (const s of segs) { s.owner = 'player'; G.walls.push(s); }
+  G.playerWalls--;
+  addLog(`Mur posé (${cx},${cy}) ${dir === 'h' ? '↔' : '↕'}`, 'player');
+  renderAll(); updateHUD();
+  checkWinCondition();
+  if (!G.gameOver) endPlayerTurn();
+}
+
+function doPlayerSpell(spellId, tx, ty) {
+  if (G.spellsUsedThisRound.has(spellId)) { showNotif('Sort déjà utilisé ce tour !'); return; }
+  const spell = SPELLS[spellId];
+  if (!spell) return;
+
+  const targets = spell.getTargets(G);
+  const isTarget = targets.some(t => t.x === tx && t.y === ty);
+  if (!isTarget && spell.getTargets(G).length > 0) { showNotif('Cible invalide'); return; }
+
+  const success = spell.onUse(G, tx, ty);
+  if (success) {
+    G.spellsUsedThisRound.add(spellId);
+    renderAll(); updateHUD();
+    checkWinCondition();
+    if (!G.gameOver) endPlayerTurn();
+    setMode('move');
+    G.activeSpell = null;
+    buildSpellUI();
+  }
+}
+
+function endPlayerTurn() {
+  G.turn = 'ai';
+  updateTurnIndicator();
+  renderAll();
+  aiTurn();
+}
+
+// ================================================================
+// WIN CONDITION
+// ================================================================
+function checkWinCondition() {
+  if (G.playerPos.y === 0) { endRound(true); return; }
+  if (G.aiPos.y === 6) { endRound(false); return; }
+}
+
+function endRound(playerWon) {
+  G.gameOver = true;
+  const elapsed = (Date.now() - G.roundStartTime) / 1000;
+
+  if (playerWon) {
+    let reward = 5; // base
+    reward += G.playerWalls; // wall bonus
+    if (elapsed < 30) reward += 3;
+    else if (elapsed < 60) reward += 1;
+    G.gold += reward;
+    addLog(`★ VICTOIRE ! +${reward} or`, 'sys');
+
+    if (G.round >= G.maxRounds) {
+      // Game won!
+      showResult(true, reward, 'Vous avez vaincu tous les ennemis !', true);
+    } else {
+      showResult(true, reward, `Round ${G.round} terminé`, false);
+    }
+  } else {
+    addLog('✖ DÉFAITE — La partie est terminée.', 'warn');
+    showResult(false, 0, 'L\'IA a atteint votre base !', false);
+  }
+}
+
+// ================================================================
+// UI HELPERS
+// ================================================================
+function setMode(m) {
+  G.mode = m;
+  G.activeSpell = null;
+  document.getElementById('btn-move').className = 'mode-btn' + (m === 'move' ? ' active' : '');
+  document.getElementById('btn-wall').className = 'mode-btn' + (m === 'wall' ? ' active-wall' : '');
+  document.getElementById('btn-wall-dir').style.display = m === 'wall' ? 'block' : 'none';
+  renderAll(); buildSpellUI();
+}
+
+function toggleWallDir() {
+  G.wallDir = G.wallDir === 'h' ? 'v' : 'h';
+  document.getElementById('btn-wall-dir').textContent = G.wallDir === 'h' ? '↔ HORIZ.' : '↕ VERT.';
+  renderAll();
+}
+
+function updateHUD() {
+  document.getElementById('hud-round').textContent = G.round;
+  document.getElementById('round-label').textContent = G.round;
+  document.getElementById('hud-gold').textContent = G.gold + '💰';
+
+  // Walls pips
+  const pips = document.getElementById('wall-pips');
+  pips.innerHTML = '';
+  for (let i = 0; i < G.playerMaxWalls; i++) {
+    const d = document.createElement('div');
+    d.className = 'wall-pip' + (i >= G.playerWalls ? ' used' : '');
+    pips.appendChild(d);
+  }
+
+  // Path distances
+  const pPath = bfs(G.playerPos.x, G.playerPos.y, 0, G.walls, G.tiles);
+  const aPath = bfs(G.aiPos.x, G.aiPos.y, 6, G.walls, G.tiles);
+  document.getElementById('p-dist').textContent = pPath ? pPath.dist : '∞';
+  document.getElementById('ai-dist').textContent = aPath ? aPath.dist : '∞';
+  document.getElementById('p-coord').textContent = `(${G.playerPos.x},${G.playerPos.y})`;
+  document.getElementById('p-walls-stat').textContent = `${G.playerWalls}/${G.playerMaxWalls}`;
+  document.getElementById('ai-walls').textContent = G.aiWalls;
+
+  // Enemy info
+  const enemy = G.enemies[Math.min(G.round - 1, G.enemies.length - 1)];
+  document.getElementById('enemy-icon').textContent = enemy.icon;
+  document.getElementById('enemy-name').textContent = enemy.name;
+  document.getElementById('enemy-level').textContent = `NIV.${enemy.level} — ${enemy.desc.split('—')[0]}`;
+
+  // Status effects
+  const se = document.getElementById('status-effects');
+  const effects = [];
+  if (G.statusEffects.playerFrozen) effects.push('<span style="color:#aaddff">❄️ Gelé</span>');
+  if (G.statusEffects.aiFrozen) effects.push('<span style="color:#aaddff">❄️ IA gelée</span>');
+  if (G.statusEffects.playerShield) effects.push('<span style="color:#5de48a">🛡️ Bouclier</span>');
+  if (G.statusEffects.aiShield) effects.push('<span style="color:#ff6b6b">🛡️ IA Bouclier</span>');
+  se.innerHTML = effects.length ? effects.join('<br>') : 'Aucun';
+}
+
+function updateTurnIndicator() {
+  const el = document.getElementById('turn-indicator');
+  if (G.gameOver) { el.textContent = '— FIN —'; el.className = 'turn-indicator thinking'; return; }
+  if (G.turn === 'player') {
+    el.textContent = '▶ VOTRE TOUR';
+    el.className = 'turn-indicator player';
+  } else {
+    el.textContent = '⟳ IA RÉFLÉCHIT...';
+    el.className = 'turn-indicator thinking';
+  }
+}
+
+function buildSpellUI() {
+  const activeGrid = document.getElementById('spell-grid-active');
+  activeGrid.innerHTML = '';
+  G.spells.active.forEach(id => {
+    const spell = SPELLS[id];
+    if (!spell) return;
+    const div = document.createElement('div');
+    const isUsed = G.spellsUsedThisRound.has(id);
+    const isActive = G.mode === 'spell' && G.activeSpell === id;
+    div.className = `spell-card ${isUsed ? 'used' : ''} ${isActive ? 'active-spell' : ''}`;
+    div.innerHTML = `<span class="s-icon">${spell.icon}</span><div class="s-name">${spell.name}</div>`;
+    if (!isUsed) {
+      div.onclick = () => {
+        if (G.turn !== 'player' || G.gameOver) return;
+        G.mode = 'spell';
+        G.activeSpell = id;
+        document.getElementById('btn-move').className = 'mode-btn';
+        document.getElementById('btn-wall').className = 'mode-btn';
+        renderAll(); buildSpellUI();
+      };
+    }
+    div.addEventListener('mouseenter', (e) => showSpellTooltip(e, spell));
+    div.addEventListener('mouseleave', hideSpellTooltip);
+    activeGrid.appendChild(div);
+  });
+  if (G.spells.active.length === 0) {
+    activeGrid.innerHTML = '<div style="font-family:VT323,monospace;font-size:14px;color:var(--text2);grid-column:span 2">Aucun sort actif</div>';
+  }
+
+  // Passives
+  const passiveGrid = document.getElementById('spell-grid-passive');
+  passiveGrid.innerHTML = '';
+  G.spells.passive.forEach(id => {
+    const spell = SPELLS[id];
+    const label = spell ? spell.name : id === 'refund' ? '💸 Bourse' : id === 'extrawall' ? '🔧 Murs Bonus' : id;
+    const div = document.createElement('div');
+    div.className = 'spell-card passive';
+    div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.gap = '6px';
+    div.innerHTML = `<span style="font-size:14px">${spell ? spell.icon : '✦'}</span><div class="s-name" style="color:var(--green)">${label}</div>`;
+    passiveGrid.appendChild(div);
+  });
+  if (G.spells.passive.length === 0) {
+    passiveGrid.innerHTML = '<div style="font-family:VT323,monospace;font-size:14px;color:var(--text2)">Aucun passif</div>';
+  }
+}
+
+function buildRunProgress() {
+  const el = document.getElementById('run-progress');
+  el.innerHTML = '';
+  for (let i = 1; i <= G.maxRounds; i++) {
+    const div = document.createElement('div');
+    const isBoss = i >= 7;
+    div.className = `rp-node ${i < G.round ? 'done' : i === G.round ? 'current' : 'future'} ${isBoss ? 'boss' : ''}`;
+    div.textContent = i < G.round ? '✓' : isBoss ? '☠' : i;
+    el.appendChild(div);
+  }
+}
+
+function addLog(msg, type = '') {
+  const box = document.getElementById('log-box');
+  const div = document.createElement('div');
+  div.className = `log-entry log-${type}`;
+  div.textContent = `> ${msg}`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function showNotif(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.style.display = 'block';
+  clearTimeout(n._t);
+  n._t = setTimeout(() => { n.style.display = 'none'; }, 2000);
+}
+
+function showSpellTooltip(e, spell) {
+  const tt = document.getElementById('spell-tooltip');
+  document.getElementById('tt-icon').textContent = spell.icon;
+  document.getElementById('tt-name').textContent = spell.name;
+  document.getElementById('tt-desc').textContent = spell.desc;
+  tt.style.display = 'block';
+  tt.style.left = (e.clientX + 12) + 'px';
+  tt.style.top = (e.clientY - 20) + 'px';
+}
+function hideSpellTooltip() { document.getElementById('spell-tooltip').style.display = 'none'; }
+
+// ================================================================
+// SHOP
+// ================================================================
+let currentShopItems = [];
+
+function buildBoard() {
+  // Already handled via state
+}
+
+function openShop() {
+  G.shopBought = false;
+  G.rerollsUsed = 0;
+  currentShopItems = generateShopItems();
+  renderShop();
+  document.getElementById('shop-subtitle').textContent = `ROUND ${G.round} TERMINÉ — ACHETEZ UN OBJET`;
+  document.getElementById('shop-gold').textContent = `💰 OR : ${G.gold}`;
+  showScreen('screen-shop');
+}
+
+function generateShopItems() {
+  const pool = [...SHOP_ITEMS];
+  // Filter out already owned spells
+  const owned = [...G.spells.active, ...G.spells.passive];
+  const filtered = pool.filter(item => !owned.includes(item.id) || item.id.startsWith('wall') || item.id === 'refund' || item.id === 'extrawall');
+  // Pick 3 random
+  const picks = [];
+  const used = new Set();
+  while (picks.length < 3 && filtered.length > 0) {
+    const i = Math.floor(Math.random() * filtered.length);
+    if (!used.has(filtered[i].id)) { picks.push(filtered[i]); used.add(filtered[i].id); }
+    if (used.size >= filtered.length) break;
+  }
+  return picks;
+}
+
+function renderShop() {
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  currentShopItems.forEach((item, idx) => {
+    const div = document.createElement('div');
+    const cantAfford = G.gold < item.cost;
+    div.className = `shop-card ${cantAfford ? 'cant-afford' : ''}`;
+    div.innerHTML = `
+      <span class="sc-icon">${item.icon}</span>
+      <div class="sc-name">${item.name}</div>
+      <div class="sc-type">${item.type}</div>
+      <div class="sc-desc">${item.desc}</div>
+      <div class="sc-cost">💰 ${item.cost} OR</div>
+    `;
+    if (!cantAfford && !G.shopBought) {
+      div.onclick = () => buyShopItem(item, div);
+    }
+    grid.appendChild(div);
+  });
+  document.getElementById('shop-gold').textContent = `💰 OR : ${G.gold}`;
+  document.getElementById('btn-reroll').textContent = `🔀 RELANCER (3💰)`;
+}
+
+function buyShopItem(item, div) {
+  if (G.gold < item.cost || G.shopBought) return;
+  G.gold -= item.cost;
+  item.apply(G);
+  G.shopBought = true;
+  div.style.borderColor = 'var(--green)';
+  div.style.boxShadow = '0 0 20px var(--green)';
+  showNotif(`✓ Acheté : ${item.name}`);
+  document.getElementById('shop-gold').textContent = `💰 OR : ${G.gold}`;
+  // Disable other items
+  document.querySelectorAll('.shop-card').forEach(c => { c.onclick = null; c.style.opacity = '0.5'; });
+  div.style.opacity = '1';
+  setTimeout(() => continueAfterShop(), 1500);
+}
+
+function rerollShop() {
+  if (G.gold < 3) { showNotif('Pas assez d\'or !'); return; }
+  G.gold -= 3;
+  currentShopItems = generateShopItems();
+  renderShop();
+}
+
+function skipShop() { continueAfterShop(); }
+
+function continueAfterShop() { startNextRound(); }
+
+// ================================================================
+// RESULT SCREEN
+// ================================================================
+function showResult(won, goldEarned, subtitle, isFinalWin) {
+  const elapsed = Math.floor((Date.now() - G.roundStartTime) / 1000);
+  const mins = Math.floor(elapsed / 60), secs = elapsed % 60;
+
+  document.getElementById('result-title').textContent = won ? (isFinalWin ? '🏆 VICTOIRE TOTALE !' : '⚔ ROUND GAGNÉ !') : '💀 DÉFAITE';
+  document.getElementById('result-title').className = `result-title ${won ? 'win' : 'lose'}`;
+  document.getElementById('result-subtitle').textContent = subtitle;
+
+  const stats = document.getElementById('result-stats');
+  const enemy = G.enemies[Math.min(G.round - 1, G.enemies.length - 1)];
+  stats.innerHTML = `
+    <div class="result-row"><span>Ennemi</span><span class="val">${enemy.icon} ${enemy.name}</span></div>
+    <div class="result-row"><span>Round</span><span class="val">${G.round} / ${G.maxRounds}</span></div>
+    <div class="result-row"><span>Durée</span><span class="val">${mins}m${secs.toString().padStart(2,'0')}s</span></div>
+    ${won ? `<div class="result-row"><span>Or gagné</span><span class="val">+${goldEarned} 💰</span></div>` : ''}
+    <div class="result-row"><span>Or total</span><span class="val">${G.gold} 💰</span></div>
+    <div class="result-row"><span>Murs restants</span><span class="val">${G.playerWalls}</span></div>
+    <div class="result-row"><span>Sorts</span><span class="val">${G.spells.active.length} actif(s)</span></div>
+  `;
+
+  const btn = document.getElementById('btn-result-continue');
+  if (!won || isFinalWin) {
+    btn.textContent = won ? '★ MENU ★' : '↩ REJOUER';
+    btn.onclick = () => showScreen('screen-title');
+  } else {
+    btn.textContent = '🛒 BOUTIQUE →';
+    btn.onclick = () => continueAfterResult();
+  }
+
+  showScreen('screen-result');
+}
+
+function continueAfterResult() {
+  if (G.round >= G.maxRounds) { showScreen('screen-title'); return; }
+  openShop();
+}
+
+// ================================================================
+// ROUND FLOW
+// ================================================================
+function startNextRound() {
+  G.round++;
+  if (G.round > G.maxRounds) { showScreen('screen-title'); return; }
+
+  const enemy = G.enemies[Math.min(G.round - 1, G.enemies.length - 1)];
+
+  // Reset for new round
+  G.playerPos = { x: 3, y: 6 };
+  G.aiPos = { x: 3, y: 0 };
+  G.playerWalls = G.playerMaxWalls;
+  // Extra wall passive
+  if (G.spells.passive.includes('extrawall')) G.playerWalls = Math.min(G.playerWalls + 2, G.playerMaxWalls + 2);
+  G.aiWalls = enemy.walls;
+  G.walls = [];
+  G.tiles = buildTiles(G.round);
+  G.turn = 'player';
+  G.mode = 'move';
+  G.activeSpell = null;
+  G.gameOver = false;
+  G.roundStartTime = Date.now();
+  G.spellsUsedThisRound = new Set();
+  G.statusEffects = { playerFrozen: false, aiFrozen: false, playerShield: false, aiShield: false };
+  G.hoverWall = null; G.hoverCell = null;
+
+  // Mason passive
+  if (G.spells.passive.includes('mason')) {
+    G.playerMaxWalls += 0; // already applied on buy
+  }
+
+  showScreen('screen-game');
+  updateHUD(); updateTurnIndicator(); buildSpellUI(); buildRunProgress(); renderAll();
+  addLog(`★ Round ${G.round} — ${enemy.icon} ${enemy.name}`, 'sys');
+  addLog(enemy.desc, 'ai');
+
+  // Clear log
+  const log = document.getElementById('log-box');
+  log.innerHTML = '';
+  addLog(`★ ROUND ${G.round} — VS ${enemy.name}`, 'sys');
+}
+
+// ================================================================
+// SCREENS
+// ================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startNewRun() {
+  initGame();
+  showScreen('screen-game');
+  updateTurnIndicator();
+  addLog(`★ ROUND 1 — VS ${G.enemies[0].icon} ${G.enemies[0].name}`, 'sys');
+  addLog(G.enemies[0].desc, 'ai');
+}
+
+function showHowToPlay() { showScreen('screen-howto'); }
+
+function confirmQuit() {
+  if (confirm('Abandonner la partie ?')) showScreen('screen-title');
+}
+
+// ================================================================
+// DECORATION GRID (Title screen)
+// ================================================================
+function buildDecoGrid() {
+  const grid = document.getElementById('deco-grid');
+  const special = { 24: 'dp', 2: 'da', 10: 'dw', 18: 'dw', 30: 'dw' };
+  for (let i = 0; i < 49; i++) {
+    const div = document.createElement('div');
+    div.className = `dc ${special[i] || ''}`;
+    grid.appendChild(div);
+  }
+}
+
+// ================================================================
+// INIT
+// ================================================================
+buildDecoGrid();
+
+// Initial game state (for HUD building etc without starting)
+G = {
+  spells: { active: [], passive: [] },
+  spellsUsedThisRound: new Set(),
+  statusEffects: {},
+  mode: 'move', wallDir: 'h', activeSpell: null, turn: 'player',
+  playerMaxWalls: 5, playerWalls: 5, aiWalls: 5,
+  walls: [], tiles: [], gameOver: false, round: 1, gold: 0,
+  playerPos: { x: 3, y: 6 }, aiPos: { x: 3, y: 0 },
+  enemies: buildEnemyList(), hoverWall: null
+};
+</script>
+</body>
+</html>
