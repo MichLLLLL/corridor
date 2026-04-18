@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milanote — Canvas Visuel</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ee;
+    --canvas-bg: #ede9e3;
+    --card-bg: #fff;
+    --card-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
+    --card-shadow-hover: 0 8px 30px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07);
+    --accent: #e8572a;
+    --accent2: #3b5bdb;
+    --text: #1a1a1a;
+    --text-muted: #888;
+    --border: rgba(0,0,0,0.08);
+    --toolbar-bg: #1c1c1e;
+    --toolbar-text: #f0ede8;
+    --note-yellow: #fff9c4;
+    --note-blue: #e3f0ff;
+    --note-green: #e8f5e9;
+    --note-pink: #fce4ec;
+    --connector-color: #b0a89e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    overflow: hidden;
+    width: 100vw; height: 100vh;
+    user-select: none;
+  }
+
+  /* TOOLBAR */
+  #toolbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 52px;
+    background: var(--toolbar-bg);
+    display: flex; align-items: center; padding: 0 16px; gap: 5px;
+    z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .brand {
+    font-family: 'Instrument Serif', serif;
+    color: var(--toolbar-text); font-size: 17px; margin-right: 10px;
+    letter-spacing: -0.3px;
+  }
+  .sep { width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 5px; }
+  .tool-btn {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    color: var(--toolbar-text); border-radius: 7px; padding: 5px 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    transition: background 0.14s, border-color 0.14s; white-space: nowrap;
+  }
+  .tool-btn:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.18); }
+  .tool-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .spacer { flex: 1; }
+  #zoom-info { color: rgba(255,255,255,0.4); font-size: 11px; min-width: 38px; text-align: right; }
+
+  /* CANVAS */
+  #canvas-wrap {
+    position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+    overflow: hidden; cursor: default;
+    background: var(--canvas-bg);
+    background-image: radial-gradient(circle, rgba(0,0,0,0.065) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  #canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; width: 5000px; height: 4000px; }
+  #connections-svg {
+    position: absolute; top: 0; left: 0; width: 5000px; height: 4000px;
+    pointer-events: none; z-index: 5; overflow: visible; transform-origin: 0 0;
+  }
+
+  /* CARDS */
+  .card {
+    position: absolute; background: var(--card-bg); border-radius: 10px;
+    box-shadow: var(--card-shadow); cursor: grab;
+    transition: box-shadow 0.18s; min-width: 160px; min-height: 56px;
+    border: 1.5px solid transparent;
+  }
+  .card:hover { box-shadow: var(--card-shadow-hover); z-index: 50; }
+  .card.dragging { box-shadow: 0 16px 48px rgba(0,0,0,0.18); cursor: grabbing; z-index: 100; }
+  .card.selected { border-color: var(--accent2); }
+  .card.note.yellow { background: var(--note-yellow); }
+  .card.note.blue { background: var(--note-blue); }
+  .card.note.green { background: var(--note-green); }
+  .card.note.pink { background: var(--note-pink); }
+
+  /* Card header */
+  .card-header {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 10px 6px; border-bottom: 1px solid var(--border);
+  }
+  .card-type-icon { font-size: 12px; opacity: 0.5; }
+  .card-title { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; flex: 1; }
+  .card-close {
+    width: 16px; height: 16px; border-radius: 50%; border: none; background: none;
+    color: var(--text-muted); cursor: pointer; font-size: 13px; display: flex;
+    align-items: center; justify-content: center; opacity: 0; transition: opacity 0.14s, background 0.14s;
+  }
+  .card:hover .card-close { opacity: 1; }
+  .card-close:hover { background: #fee2e2; color: #b91c1c; }
+  .card-body { padding: 9px 10px; }
+
+  /* Note */
+  .card.note { min-width: 200px; }
+  .card.note .card-body textarea {
+    width: 100%; min-height: 65px; border: none; outline: none; resize: none;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.55;
+    color: var(--text); background: transparent; cursor: text;
+  }
+
+  /* Todo */
+  .todo-item { display: flex; align-items: flex-start; gap: 7px; padding: 3px 0; font-size: 13px; color: var(--text); }
+  .todo-item input[type=checkbox] { margin-top: 2px; accent-color: var(--accent2); cursor: pointer; flex-shrink: 0; }
+  .todo-item label { cursor: pointer; line-height: 1.4; }
+  .todo-item.done label { text-decoration: line-through; opacity: 0.4; }
+  .todo-add-btn {
+    margin-top: 6px; background: none; border: 1px dashed rgba(0,0,0,0.12);
+    border-radius: 6px; width: 100%; padding: 4px 8px; font-size: 12px;
+    color: var(--text-muted); cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif;
+  }
+  .todo-add-btn:hover { background: rgba(0,0,0,0.03); }
+
+  /* Image */
+  .card.image { min-width: 180px; }
+  .card.image img { width: 100%; border-radius: 0 0 8px 8px; display: block; object-fit: cover; max-height: 200px; }
+  .img-placeholder {
+    width: 100%; height: 130px; background: #f0eee9; border-radius: 0 0 8px 8px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; font-size: 28px; color: #c5bfb6; cursor: pointer;
+  }
+  .img-placeholder span.hint { font-size: 11px; color: var(--text-muted); }
+  .img-placeholder:hover { background: #e8e4de; }
+
+  /* Link */
+  .link-url { font-size: 11px; color: var(--accent2); word-break: break-all; margin-bottom: 5px; opacity: 0.8; }
+  .link-desc { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+  /* Section */
+  .card.section {
+    background: transparent !important; box-shadow: none !important;
+    border: 2px dashed rgba(0,0,0,0.12) !important;
+    min-width: 260px; min-height: 180px;
+  }
+  .section-label {
+    font-family: 'Instrument Serif', serif; font-size: 22px;
+    color: rgba(0,0,0,0.32); padding: 12px 14px; letter-spacing: -0.3px; outline: none;
+  }
+
+  /* Resize handle */
+  .resize-handle { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; opacity: 0; transition: opacity 0.14s; }
+  .card:hover .resize-handle { opacity: 1; }
+  .resize-handle::after {
+    content: ''; position: absolute; right: 3px; bottom: 3px;
+    width: 6px; height: 6px; border-right: 2px solid rgba(0,0,0,0.22); border-bottom: 2px solid rgba(0,0,0,0.22); border-radius: 1px;
+  }
+
+  /* Connect dot */
+  .connect-dot {
+    position: absolute; width: 10px; height: 10px; background: var(--accent);
+    border-radius: 50%; right: -5px; top: 50%; transform: translateY(-50%);
+    cursor: crosshair; opacity: 0; transition: opacity 0.14s, transform 0.14s;
+    z-index: 10; border: 2px solid #fff;
+  }
+  .card:hover .connect-dot { opacity: 1; }
+  .connect-dot:hover { transform: translateY(-50%) scale(1.35); }
+
+  /* Connectors */
+  .connector-path {
+    fill: none; stroke: var(--connector-color); stroke-width: 1.8;
+    stroke-dasharray: 5 4; animation: dashAnim 1.8s linear infinite;
+    pointer-events: stroke; cursor: pointer;
+  }
+  .connector-path:hover { stroke: var(--accent); stroke-width: 2.5; }
+  @keyframes dashAnim { to { stroke-dashoffset: -18; } }
+  .connector-temp { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 4 4; opacity: 0.6; pointer-events: none; }
+
+  /* Context menu */
+  #ctx-menu {
+    position: fixed; background: #fff; border: 1px solid rgba(0,0,0,0.09);
+    border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    padding: 5px; z-index: 2000; display: none; min-width: 168px;
+  }
+  .ctx-item { padding: 7px 11px; font-size: 13px; color: var(--text); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .ctx-item:hover { background: #f5f3f0; }
+  .ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
+  .ctx-item.danger { color: #b91c1c; }
+  .ctx-item.danger:hover { background: #fee2e2; }
+
+  /* Minimap */
+  #minimap {
+    position: fixed; right: 16px; bottom: 16px; width: 140px; height: 90px;
+    background: rgba(255,255,255,0.88); border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    z-index: 900;
+  }
+  #minimap canvas { width: 100%; height: 100%; display: block; }
+
+  /* Tips */
+  #tips {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(28,28,30,0.85); color: rgba(255,255,255,0.75); font-size: 11.5px;
+    padding: 6px 14px; border-radius: 20px; z-index: 900; pointer-events: none;
+    white-space: nowrap; transition: opacity 1s;
+  }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <span class="brand">Milanote</span>
+  <div class="sep"></div>
+  <button class="tool-btn" onclick="addCard('note')"><span>📝</span> Note</button>
+  <button class="tool-btn" onclick="addCard('todo')"><span>✅</span> To-do</button>
+  <button class="tool-btn" onclick="addCard('image')"><span>🖼️</span> Image</button>
+  <button class="tool-btn" onclick="addCard('link')"><span>🔗</span> Lien</button>
+  <button class="tool-btn" onclick="addCard('section')"><span>⬚</span> Section</button>
+  <div class="sep"></div>
+  <button class="tool-btn" id="connect-btn" onclick="toggleConnectMode()"><span>↗</span> Connecter</button>
+  <button class="tool-btn" onclick="clearConnections()"><span>✕</span> Connexions</button>
+  <div class="sep"></div>
+  <button class="tool-btn" onclick="resetView()"><span>⊙</span> Centrer</button>
+  <div class="spacer"></div>
+  <span id="zoom-info">100%</span>
+</div>
+
+<div id="canvas-wrap">
+  <svg id="connections-svg"></svg>
+  <div id="canvas"></div>
+</div>
+
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxDo('note')">📝 Note</div>
+  <div class="ctx-item" onclick="ctxDo('todo')">✅ To-do list</div>
+  <div class="ctx-item" onclick="ctxDo('image')">🖼️ Image</div>
+  <div class="ctx-item" onclick="ctxDo('link')">🔗 Lien</div>
+  <div class="ctx-item" onclick="ctxDo('section')">⬚ Section</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxDo('yellow')">🟡 Note jaune</div>
+  <div class="ctx-item" onclick="ctxDo('blue')">🔵 Note bleue</div>
+  <div class="ctx-item" onclick="ctxDo('green')">🟢 Note verte</div>
+  <div class="ctx-item" onclick="ctxDo('pink')">🩷 Note rose</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item danger" onclick="ctxDo('delete')">🗑️ Supprimer</div>
+</div>
+
+<div id="minimap"><canvas id="mm-canvas"></canvas></div>
+<div id="tips">🖱️ Clic droit pour ajouter • Molette pour zoomer • Glissez pour naviguer</div>
+
+<script>
+let scale = 1, panX = 100, panY = 80;
+let isPanning = false, panStart = {};
+let cards = {}, connections = [], cardCount = 0;
+let connectMode = false, connectFrom = null, tempLine = null;
+let ctxPos = {x:0,y:0}, ctxCardId = null;
+let todoN = 0;
+
+const wrap = document.getElementById('canvas-wrap');
+const canvas = document.getElementById('canvas');
+const svg = document.getElementById('connections-svg');
+const zoomEl = document.getElementById('zoom-info');
+
+function applyT() {
+  canvas.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  svg.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+  zoomEl.textContent = Math.round(scale*100)+'%';
+  minimap();
+}
+
+// Pan
+wrap.addEventListener('mousedown', e => {
+  if (e.target !== wrap && e.target !== canvas && !e.target.isSameNode(svg)) return;
+  if (e.button === 0 || e.button === 1) {
+    isPanning = true;
+    panStart = {x: e.clientX - panX, y: e.clientY - panY};
+    wrap.style.cursor = 'grabbing';
+  }
+  closeCtx();
+});
+window.addEventListener('mousemove', e => {
+  if (isPanning) { panX = e.clientX - panStart.x; panY = e.clientY - panStart.y; applyT(); }
+  if (tempLine && connectFrom) {
+    const p = cvt(e.clientX, e.clientY);
+    const f = center(connectFrom);
+    tempLine.setAttribute('d', bezier(f.x,f.y,p.x,p.y));
+  }
+});
+window.addEventListener('mouseup', () => { isPanning = false; wrap.style.cursor='default'; });
+
+// Zoom
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const d = e.deltaY > 0 ? 0.9 : 1.1;
+  const mx = e.clientX, my = e.clientY - 52;
+  const wx = (mx-panX)/scale, wy = (my-panY)/scale;
+  scale = Math.min(3, Math.max(0.15, scale*d));
+  panX = mx - wx*scale; panY = my - wy*scale;
+  applyT();
+}, {passive:false});
+
+function cvt(cx,cy) { return {x:(cx-panX)/scale, y:(cy-52-panY)/scale}; }
+function resetView() { scale=1; panX=100; panY=80; applyT(); }
+
+// Context menu
+wrap.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  ctxPos = cvt(e.clientX, e.clientY);
+  ctxCardId = null;
+  showCtx(e.clientX, e.clientY);
+});
+function showCtx(x,y) {
+  const m = document.getElementById('ctx-menu');
+  m.style.display = 'block'; m.style.left = x+'px'; m.style.top = y+'px';
+}
+function closeCtx() { document.getElementById('ctx-menu').style.display='none'; ctxCardId=null; }
+document.addEventListener('click', e => { if (!document.getElementById('ctx-menu').contains(e.target)) closeCtx(); });
+
+function ctxDo(action) {
+  closeCtx();
+  if (action === 'delete' && ctxCardId) { deleteCard(ctxCardId); return; }
+  if (['yellow','blue','green','pink'].includes(action) && ctxCardId) {
+    const c = cards[ctxCardId];
+    if (c && c.el.classList.contains('note')) {
+      c.el.classList.remove('yellow','blue','green','pink');
+      c.el.classList.add(action);
+    }
+    return;
+  }
+  addCard(action, ctxPos.x, ctxPos.y);
+}
+
+// Cards
+function addCard(type, x, y) {
+  if (x === undefined) { x = (450-panX)/scale + Math.random()*40; y = (220-panY)/scale + Math.random()*40; }
+  const id = 'c'+(++cardCount);
+  const el = document.createElement('div');
+  el.className = 'card '+type;
+  el.id = id;
+  el.style.left = x+'px'; el.style.top = y+'px';
+  el.style.width = (type==='section'?300:type==='image'?200:220)+'px';
+  el.innerHTML = cardHTML(type, id);
+  canvas.appendChild(el);
+  cards[id] = {el, type, x, y};
+  makeDraggable(el, id);
+  addResize(el, id);
+  addDot(el, id);
+  el.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); ctxCardId=id; showCtx(e.clientX,e.clientY); });
+  if (type==='todo') initTodo(el, id);
+  if (type==='image') initImg(el, id);
+  applyT(); minimap();
+  return id;
+}
+
+function cardHTML(type, id) {
+  const X = `<button class="card-close" onclick="deleteCard('${id}')">×</button>`;
+  if (type==='note') return `<div class="card-header"><span class="card-type-icon">📝</span><span class="card-title">Note</span>${X}</div><div class="card-body"><textarea placeholder="Idée…"></textarea></div>`;
+  if (type==='todo') return `<div class="card-header"><span class="card-type-icon">✅</span><span class="card-title">To-do</span>${X}</div><div class="card-body"><div class="todo-list"></div><button class="todo-add-btn">+ Ajouter</button></div>`;
+  if (type==='image') return `<div class="card-header"><span class="card-type-icon">🖼️</span><span class="card-title">Image</span>${X}</div><div class="img-placeholder" onclick="openImg('${id}')"><span>🖼️</span><span class="hint">Cliquer pour importer</span></div><input type="file" accept="image/*" style="display:none" class="img-inp">`;
+  if (type==='link') return `<div class="card-header"><span class="card-type-icon">🔗</span><span class="card-title">Lien</span>${X}</div><div class="card-body"><div class="link-url" contenteditable="true" spellcheck="false">https://</div><div class="link-desc" contenteditable="true" spellcheck="false">Description…</div></div>`;
+  if (type==='section') return `<div class="section-label" contenteditable="true" spellcheck="false">Section</div>${X}`;
+  return '';
+}
+
+// Drag
+function makeDraggable(el, id) {
+  let drag=false, sx,sy,ox,oy;
+  el.addEventListener('mousedown', e => {
+    if (e.button!==0) return;
+    const t = e.target;
+    if (t.tagName==='TEXTAREA'||t.tagName==='INPUT'||t.isContentEditable||t.classList.contains('card-close')||t.classList.contains('connect-dot')||t.classList.contains('resize-handle')||t.classList.contains('todo-add-btn')) return;
+    if (connectMode) { startConn(id); return; }
+    drag=true; sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
+    el.classList.add('dragging'); el.style.zIndex=100;
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const dx=(e.clientX-sx)/scale, dy=(e.clientY-sy)/scale;
+    el.style.left=(ox+dx)+'px'; el.style.top=(oy+dy)+'px';
+    cards[id].x=ox+dx; cards[id].y=oy+dy;
+    drawConns(); minimap();
+  });
+  window.addEventListener('mouseup', ()=>{ if(!drag)return; drag=false; el.classList.remove('dragging'); el.style.zIndex=''; });
+}
+
+// Resize
+function addResize(el, id) {
+  const rh = document.createElement('div'); rh.className='resize-handle'; el.appendChild(rh);
+  let r=false, sx,sy,ow,oh;
+  rh.addEventListener('mousedown', e=>{ e.stopPropagation(); r=true; sx=e.clientX; sy=e.clientY; ow=el.offsetWidth; oh=el.offsetHeight; });
+  window.addEventListener('mousemove', e=>{ if(!r)return; el.style.width=Math.max(140,ow+(e.clientX-sx)/scale)+'px'; if(cards[id]&&cards[id].type==='section')el.style.height=Math.max(100,oh+(e.clientY-sy)/scale)+'px'; drawConns(); });
+  window.addEventListener('mouseup',()=>{ r=false; });
+}
+
+// Connect dot
+function addDot(el, id) {
+  const dot = document.createElement('div'); dot.className='connect-dot'; el.appendChild(dot);
+  dot.addEventListener('mousedown', e=>{ e.stopPropagation(); startConn(id); });
+  el.addEventListener('mouseup', ()=>{ if(connectFrom&&connectFrom!==id) endConn(id); });
+}
+
+function toggleConnectMode() {
+  connectMode = !connectMode;
+  document.getElementById('connect-btn').classList.toggle('active', connectMode);
+  if (!connectMode) cancelConn();
+}
+function startConn(id) {
+  connectFrom = id;
+  tempLine = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tempLine.setAttribute('class','connector-temp'); svg.appendChild(tempLine);
+}
+function endConn(toId) {
+  if (!connectFrom||connectFrom===toId) { cancelConn(); return; }
+  if (!connections.find(c=>(c.f===connectFrom&&c.t===toId)||(c.f===toId&&c.t===connectFrom))) {
+    connections.push({f:connectFrom,t:toId}); drawConns();
+  }
+  cancelConn();
+}
+function cancelConn() { if(tempLine){tempLine.remove();tempLine=null;} connectFrom=null; }
+function clearConnections() { connections=[]; drawConns(); }
+
+wrap.addEventListener('mousedown', e=>{ if(connectFrom&&(e.target===wrap||e.target===canvas)) cancelConn(); });
+
+function center(id) {
+  const el=document.getElementById(id); if(!el)return{x:0,y:0};
+  return {x:parseFloat(el.style.left)+el.offsetWidth/2, y:parseFloat(el.style.top)+el.offsetHeight/2};
+}
+function bezier(x1,y1,x2,y2) {
+  const dx=Math.abs(x2-x1)*0.5;
+  return `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+}
+function drawConns() {
+  svg.querySelectorAll('.connector-path').forEach(p=>p.remove());
+  connections.forEach(c=>{
+    if(!document.getElementById(c.f)||!document.getElementById(c.t)) return;
+    const f=center(c.f), t=center(c.t);
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('class','connector-path'); p.setAttribute('d',bezier(f.x,f.y,t.x,t.y));
+    p.addEventListener('click',()=>{ connections=connections.filter(x=>x!==c); drawConns(); });
+    svg.appendChild(p);
+  });
+}
+
+function deleteCard(id) {
+  const el=document.getElementById(id); if(el)el.remove();
+  delete cards[id];
+  connections=connections.filter(c=>c.f!==id&&c.t!==id);
+  drawConns(); minimap();
+}
+
+// Todo
+function initTodo(el, id) {
+  addTodoItem(el, 'Première tâche');
+  addTodoItem(el, 'Deuxième tâche');
+  el.querySelector('.todo-add-btn').addEventListener('click', e=>{
+    e.stopPropagation();
+    const item = addTodoItem(el, '');
+    const lbl = item.querySelector('label');
+    lbl.focus();
+    const r=document.createRange(); r.selectNodeContents(lbl);
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+  });
+}
+function addTodoItem(el, text) {
+  const n=++todoN; const div=document.createElement('div'); div.className='todo-item';
+  div.innerHTML=`<input type="checkbox" id="td${n}"><label for="td${n}" contenteditable="true" spellcheck="false">${text}</label>`;
+  div.querySelector('input').addEventListener('change',()=>div.classList.toggle('done',div.querySelector('input').checked));
+  el.querySelector('.todo-list').appendChild(div);
+  return div;
+}
+
+// Image
+function openImg(id) { document.getElementById(id).querySelector('.img-inp').click(); }
+function initImg(el, id) {
+  el.querySelector('.img-inp').addEventListener('change', function(){
+    if(!this.files[0])return;
+    const r=new FileReader(); r.onload=ev=>{
+      const ph=el.querySelector('.img-placeholder'); if(!ph)return;
+      const img=document.createElement('img'); img.src=ev.target.result;
+      ph.replaceWith(img);
+    }; r.readAsDataURL(this.files[0]);
+  });
+}
+
+// Minimap
+function minimap() {
+  const mc=document.getElementById('mm-canvas');
+  const ctx=mc.getContext('2d');
+  mc.width=140; mc.height=90;
+  ctx.fillStyle='#ede9e3'; ctx.fillRect(0,0,140,90);
+  const sx=140/5000, sy=90/4000;
+  Object.values(cards).forEach(c=>{
+    const w=c.el.offsetWidth||200, h=c.el.offsetHeight||80;
+    ctx.fillStyle='#c5bfb6'; ctx.fillRect(c.x*sx,c.y*sy,w*sx,h*sy);
+  });
+  const vx=-panX/scale*sx, vy=-panY/scale*sy;
+  const vw=wrap.offsetWidth/scale*sx, vh=wrap.offsetHeight/scale*sy;
+  ctx.strokeStyle='#e8572a'; ctx.lineWidth=1.2;
+  ctx.strokeRect(vx,vy,vw,vh);
+}
+
+// Keyboard
+window.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ cancelConn(); connectMode=false; document.getElementById('connect-btn').classList.remove('active'); }
+  if((e.key==='n'||e.key==='N')&&!e.target.isContentEditable&&e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='INPUT'){
+    addCard('note',(450-panX)/scale,(250-panY)/scale);
+  }
+});
+
+// Init board
+function initBoard() {
+  const n1=addCard('note',60,60);
+  const ta1=document.querySelector('#'+n1+' textarea');
+  if(ta1)ta1.value='🎬 Court-métrage\n\nDeux projets à Cannes — storyboard en cours';
+  document.getElementById(n1).classList.add('yellow');
+
+  const n2=addCard('note',320,40);
+  const ta2=document.querySelector('#'+n2+' textarea');
+  if(ta2)ta2.value='Ambiance sonore :\n• Musique minimaliste\n• Field recordings\n• Silence expressif';
+  document.getElementById(n2).classList.add('blue');
+
+  const n3=addCard('todo',60,240);
+
+  const n4=addCard('section',310,210);
+  const sl=document.querySelector('#'+n4+' .section-label');
+  if(sl)sl.textContent='Références visuelles';
+
+  const n5=addCard('image',350,260);
+  const n6=addCard('note',620,60);
+  const ta6=document.querySelector('#'+n6+' textarea');
+  if(ta6)ta6.value='Le silence\ncomme personnage\nà part entière ✦';
+  document.getElementById(n6).classList.add('pink');
+
+  const n7=addCard('link',620,230);
+
+  setTimeout(()=>{
+    connections.push({f:n1,t:n2},{f:n1,t:n3},{f:n2,t:n6});
+    drawConns(); minimap();
+  },120);
+}
+
+initBoard();
+applyT();
+
+setTimeout(()=>{
+  const tips=document.getElementById('tips');
+  tips.style.opacity='0';
+  setTimeout(()=>tips.remove(),1000);
+},5000);
+</script>
+</body>
+</html>
