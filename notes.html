@@ -7,131 +7,70 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f2ee;
-    --canvas-bg: #ede9e3;
-    --card-bg: #fff;
+    --bg: #f5f2ee; --canvas-bg: #ede9e3; --card-bg: #fff;
     --card-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
     --card-shadow-hover: 0 8px 30px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07);
-    --accent: #e8572a;
-    --accent2: #3b5bdb;
-    --text: #1a1a1a;
-    --text-muted: #888;
-    --border: rgba(0,0,0,0.08);
-    --toolbar-bg: #1c1c1e;
-    --toolbar-text: #f0ede8;
-    --note-yellow: #fff9c4;
-    --note-blue: #e3f0ff;
-    --note-green: #e8f5e9;
-    --note-pink: #fce4ec;
+    --accent: #e8572a; --accent2: #3b5bdb; --text: #1a1a1a; --text-muted: #888;
+    --border: rgba(0,0,0,0.08); --toolbar-bg: #1c1c1e; --toolbar-text: #f0ede8;
+    --note-yellow: #fff9c4; --note-blue: #e3f0ff; --note-green: #e8f5e9; --note-pink: #fce4ec;
     --connector-color: #b0a89e;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    overflow: hidden;
-    width: 100vw; height: 100vh;
-    user-select: none;
-  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); overflow: hidden; width: 100vw; height: 100vh; user-select: none; }
 
   /* TOOLBAR */
-  #toolbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 52px;
-    background: var(--toolbar-bg);
-    display: flex; align-items: center; padding: 0 16px; gap: 5px;
-    z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .brand {
-    font-family: 'Instrument Serif', serif;
-    color: var(--toolbar-text); font-size: 17px; margin-right: 10px;
-    letter-spacing: -0.3px;
-  }
+  #toolbar { position: fixed; top: 0; left: 0; right: 0; height: 52px; background: var(--toolbar-bg); display: flex; align-items: center; padding: 0 16px; gap: 5px; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .brand { font-family: 'Instrument Serif', serif; color: var(--toolbar-text); font-size: 17px; margin-right: 10px; letter-spacing: -0.3px; }
   .sep { width: 1px; height: 20px; background: rgba(255,255,255,0.1); margin: 0 5px; }
-  .tool-btn {
-    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
-    color: var(--toolbar-text); border-radius: 7px; padding: 5px 10px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400;
-    cursor: pointer; display: flex; align-items: center; gap: 5px;
-    transition: background 0.14s, border-color 0.14s; white-space: nowrap;
-  }
+  .tool-btn { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: var(--toolbar-text); border-radius: 7px; padding: 5px 10px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.14s, border-color 0.14s; white-space: nowrap; }
   .tool-btn:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.18); }
   .tool-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tool-btn.danger:hover { background: #c0392b; border-color: #c0392b; color: #fff; }
   .spacer { flex: 1; }
   #zoom-info { color: rgba(255,255,255,0.4); font-size: 11px; min-width: 38px; text-align: right; }
+  #save-badge { font-size: 10.5px; color: rgba(255,255,255,0.3); display: flex; align-items: center; gap: 4px; margin-left: 4px; }
+  #save-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; transition: background 0.3s; }
+  #save-dot.saving { background: #f59e0b; }
 
   /* CANVAS */
-  #canvas-wrap {
-    position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
-    overflow: hidden; cursor: default;
-    background: var(--canvas-bg);
-    background-image: radial-gradient(circle, rgba(0,0,0,0.065) 1px, transparent 1px);
-    background-size: 28px 28px;
-  }
+  #canvas-wrap { position: fixed; top: 52px; left: 0; right: 0; bottom: 0; overflow: hidden; cursor: default; background: var(--canvas-bg); background-image: radial-gradient(circle, rgba(0,0,0,0.065) 1px, transparent 1px); background-size: 28px 28px; }
   #canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; width: 5000px; height: 4000px; }
-  #connections-svg {
-    position: absolute; top: 0; left: 0; width: 5000px; height: 4000px;
-    pointer-events: none; z-index: 5; overflow: visible; transform-origin: 0 0;
-  }
+  #connections-svg { position: absolute; top: 0; left: 0; width: 5000px; height: 4000px; pointer-events: none; z-index: 5; overflow: visible; transform-origin: 0 0; }
 
   /* CARDS */
-  .card {
-    position: absolute; background: var(--card-bg); border-radius: 10px;
-    box-shadow: var(--card-shadow); cursor: grab;
-    transition: box-shadow 0.18s; min-width: 160px; min-height: 56px;
-    border: 1.5px solid transparent;
-  }
+  .card { position: absolute; background: var(--card-bg); border-radius: 10px; box-shadow: var(--card-shadow); cursor: grab; transition: box-shadow 0.18s; min-width: 160px; min-height: 56px; border: 1.5px solid transparent; }
   .card:hover { box-shadow: var(--card-shadow-hover); z-index: 50; }
   .card.dragging { box-shadow: 0 16px 48px rgba(0,0,0,0.18); cursor: grabbing; z-index: 100; }
-  .card.selected { border-color: var(--accent2); }
   .card.note.yellow { background: var(--note-yellow); }
-  .card.note.blue { background: var(--note-blue); }
-  .card.note.green { background: var(--note-green); }
-  .card.note.pink { background: var(--note-pink); }
+  .card.note.blue   { background: var(--note-blue); }
+  .card.note.green  { background: var(--note-green); }
+  .card.note.pink   { background: var(--note-pink); }
 
   /* Card header */
-  .card-header {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 10px 6px; border-bottom: 1px solid var(--border);
-  }
+  .card-header { display: flex; align-items: center; gap: 6px; padding: 8px 10px 6px; border-bottom: 1px solid var(--border); }
   .card-type-icon { font-size: 12px; opacity: 0.5; }
   .card-title { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; flex: 1; }
-  .card-close {
-    width: 16px; height: 16px; border-radius: 50%; border: none; background: none;
-    color: var(--text-muted); cursor: pointer; font-size: 13px; display: flex;
-    align-items: center; justify-content: center; opacity: 0; transition: opacity 0.14s, background 0.14s;
-  }
+  .card-close { width: 16px; height: 16px; border-radius: 50%; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.14s, background 0.14s; }
   .card:hover .card-close { opacity: 1; }
   .card-close:hover { background: #fee2e2; color: #b91c1c; }
   .card-body { padding: 9px 10px; }
 
   /* Note */
   .card.note { min-width: 200px; }
-  .card.note .card-body textarea {
-    width: 100%; min-height: 65px; border: none; outline: none; resize: none;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.55;
-    color: var(--text); background: transparent; cursor: text;
-  }
+  .card.note .card-body textarea { width: 100%; min-height: 65px; border: none; outline: none; resize: none; font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.55; color: var(--text); background: transparent; cursor: text; }
 
   /* Todo */
   .todo-item { display: flex; align-items: flex-start; gap: 7px; padding: 3px 0; font-size: 13px; color: var(--text); }
   .todo-item input[type=checkbox] { margin-top: 2px; accent-color: var(--accent2); cursor: pointer; flex-shrink: 0; }
   .todo-item label { cursor: pointer; line-height: 1.4; }
   .todo-item.done label { text-decoration: line-through; opacity: 0.4; }
-  .todo-add-btn {
-    margin-top: 6px; background: none; border: 1px dashed rgba(0,0,0,0.12);
-    border-radius: 6px; width: 100%; padding: 4px 8px; font-size: 12px;
-    color: var(--text-muted); cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif;
-  }
+  .todo-add-btn { margin-top: 6px; background: none; border: 1px dashed rgba(0,0,0,0.12); border-radius: 6px; width: 100%; padding: 4px 8px; font-size: 12px; color: var(--text-muted); cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif; }
   .todo-add-btn:hover { background: rgba(0,0,0,0.03); }
 
   /* Image */
   .card.image { min-width: 180px; }
   .card.image img { width: 100%; border-radius: 0 0 8px 8px; display: block; object-fit: cover; max-height: 200px; }
-  .img-placeholder {
-    width: 100%; height: 130px; background: #f0eee9; border-radius: 0 0 8px 8px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; font-size: 28px; color: #c5bfb6; cursor: pointer;
-  }
+  .img-placeholder { width: 100%; height: 130px; background: #f0eee9; border-radius: 0 0 8px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font-size: 28px; color: #c5bfb6; cursor: pointer; }
   .img-placeholder span.hint { font-size: 11px; color: var(--text-muted); }
   .img-placeholder:hover { background: #e8e4de; }
 
@@ -140,50 +79,27 @@
   .link-desc { font-size: 13px; color: var(--text); line-height: 1.4; }
 
   /* Section */
-  .card.section {
-    background: transparent !important; box-shadow: none !important;
-    border: 2px dashed rgba(0,0,0,0.12) !important;
-    min-width: 260px; min-height: 180px;
-  }
-  .section-label {
-    font-family: 'Instrument Serif', serif; font-size: 22px;
-    color: rgba(0,0,0,0.32); padding: 12px 14px; letter-spacing: -0.3px; outline: none;
-  }
+  .card.section { background: transparent !important; box-shadow: none !important; border: 2px dashed rgba(0,0,0,0.12) !important; min-width: 260px; min-height: 180px; }
+  .section-label { font-family: 'Instrument Serif', serif; font-size: 22px; color: rgba(0,0,0,0.32); padding: 12px 14px; letter-spacing: -0.3px; outline: none; }
 
   /* Resize handle */
   .resize-handle { position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize; opacity: 0; transition: opacity 0.14s; }
   .card:hover .resize-handle { opacity: 1; }
-  .resize-handle::after {
-    content: ''; position: absolute; right: 3px; bottom: 3px;
-    width: 6px; height: 6px; border-right: 2px solid rgba(0,0,0,0.22); border-bottom: 2px solid rgba(0,0,0,0.22); border-radius: 1px;
-  }
+  .resize-handle::after { content: ''; position: absolute; right: 3px; bottom: 3px; width: 6px; height: 6px; border-right: 2px solid rgba(0,0,0,0.22); border-bottom: 2px solid rgba(0,0,0,0.22); border-radius: 1px; }
 
   /* Connect dot */
-  .connect-dot {
-    position: absolute; width: 10px; height: 10px; background: var(--accent);
-    border-radius: 50%; right: -5px; top: 50%; transform: translateY(-50%);
-    cursor: crosshair; opacity: 0; transition: opacity 0.14s, transform 0.14s;
-    z-index: 10; border: 2px solid #fff;
-  }
+  .connect-dot { position: absolute; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; right: -5px; top: 50%; transform: translateY(-50%); cursor: crosshair; opacity: 0; transition: opacity 0.14s, transform 0.14s; z-index: 10; border: 2px solid #fff; }
   .card:hover .connect-dot { opacity: 1; }
   .connect-dot:hover { transform: translateY(-50%) scale(1.35); }
 
   /* Connectors */
-  .connector-path {
-    fill: none; stroke: var(--connector-color); stroke-width: 1.8;
-    stroke-dasharray: 5 4; animation: dashAnim 1.8s linear infinite;
-    pointer-events: stroke; cursor: pointer;
-  }
+  .connector-path { fill: none; stroke: var(--connector-color); stroke-width: 1.8; stroke-dasharray: 5 4; animation: dashAnim 1.8s linear infinite; pointer-events: stroke; cursor: pointer; }
   .connector-path:hover { stroke: var(--accent); stroke-width: 2.5; }
   @keyframes dashAnim { to { stroke-dashoffset: -18; } }
   .connector-temp { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 4 4; opacity: 0.6; pointer-events: none; }
 
   /* Context menu */
-  #ctx-menu {
-    position: fixed; background: #fff; border: 1px solid rgba(0,0,0,0.09);
-    border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    padding: 5px; z-index: 2000; display: none; min-width: 168px;
-  }
+  #ctx-menu { position: fixed; background: #fff; border: 1px solid rgba(0,0,0,0.09); border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); padding: 5px; z-index: 2000; display: none; min-width: 168px; }
   .ctx-item { padding: 7px 11px; font-size: 13px; color: var(--text); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
   .ctx-item:hover { background: #f5f3f0; }
   .ctx-sep { height: 1px; background: var(--border); margin: 4px 0; }
@@ -191,21 +107,24 @@
   .ctx-item.danger:hover { background: #fee2e2; }
 
   /* Minimap */
-  #minimap {
-    position: fixed; right: 16px; bottom: 16px; width: 140px; height: 90px;
-    background: rgba(255,255,255,0.88); border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-    z-index: 900;
-  }
+  #minimap { position: fixed; right: 16px; bottom: 16px; width: 140px; height: 90px; background: rgba(255,255,255,0.88); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.1); z-index: 900; }
   #minimap canvas { width: 100%; height: 100%; display: block; }
 
   /* Tips */
-  #tips {
-    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-    background: rgba(28,28,30,0.85); color: rgba(255,255,255,0.75); font-size: 11.5px;
-    padding: 6px 14px; border-radius: 20px; z-index: 900; pointer-events: none;
-    white-space: nowrap; transition: opacity 1s;
-  }
+  #tips { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(28,28,30,0.85); color: rgba(255,255,255,0.75); font-size: 11.5px; padding: 6px 14px; border-radius: 20px; z-index: 900; pointer-events: none; white-space: nowrap; transition: opacity 1s; }
+
+  /* Export / reset modal */
+  #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 3000; display: none; align-items: center; justify-content: center; }
+  #modal-overlay.open { display: flex; }
+  #modal { background: #fff; border-radius: 14px; padding: 28px 32px; width: 420px; box-shadow: 0 24px 64px rgba(0,0,0,0.2); }
+  #modal h2 { font-family: 'Instrument Serif', serif; font-size: 20px; margin-bottom: 8px; }
+  #modal p { font-size: 13px; color: var(--text-muted); line-height: 1.55; margin-bottom: 20px; }
+  #modal textarea { width: 100%; height: 140px; font-family: 'DM Mono', monospace; font-size: 11px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; resize: none; outline: none; color: var(--text); }
+  .modal-btns { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+  .modal-btns button { padding: 7px 14px; border-radius: 7px; border: 1px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  .modal-btns .primary { background: var(--accent2); color: #fff; border-color: var(--accent2); }
+  .modal-btns .cancel { background: none; }
+  .modal-btns .cancel:hover { background: #f5f3f0; }
 </style>
 </head>
 <body>
@@ -223,7 +142,11 @@
   <button class="tool-btn" onclick="clearConnections()"><span>✕</span> Connexions</button>
   <div class="sep"></div>
   <button class="tool-btn" onclick="resetView()"><span>⊙</span> Centrer</button>
+  <button class="tool-btn" onclick="openExport()"><span>📤</span> JSON</button>
+  <button class="tool-btn danger" onclick="confirmReset()"><span>🗑️</span> Reset</button>
   <div class="spacer"></div>
+  <div id="save-badge"><div id="save-dot"></div><span id="save-label">Sauvegardé</span></div>
+  <div class="sep"></div>
   <span id="zoom-info">100%</span>
 </div>
 
@@ -250,19 +173,235 @@
 <div id="minimap"><canvas id="mm-canvas"></canvas></div>
 <div id="tips">🖱️ Clic droit pour ajouter • Molette pour zoomer • Glissez pour naviguer</div>
 
+<!-- JSON Export / Import Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>Base de données JSON</h2>
+    <p>Voici l'état complet de ton board. Tu peux copier ce JSON, le sauvegarder en fichier <code>.json</code>, puis le réimporter ici pour restaurer ton board sur n'importe quelle machine.</p>
+    <textarea id="modal-json" spellcheck="false"></textarea>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeModal()">Fermer</button>
+      <button class="primary" onclick="copyJson()">📋 Copier</button>
+      <button class="primary" onclick="importJson()">📥 Importer</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ─── DB KEY ───
+const DB_KEY = 'milanote_board_v1';
+
+// ─── STATE ───
 let scale = 1, panX = 100, panY = 80;
 let isPanning = false, panStart = {};
 let cards = {}, connections = [], cardCount = 0;
 let connectMode = false, connectFrom = null, tempLine = null;
 let ctxPos = {x:0,y:0}, ctxCardId = null;
 let todoN = 0;
+let saveTimer = null;
 
 const wrap = document.getElementById('canvas-wrap');
 const canvas = document.getElementById('canvas');
 const svg = document.getElementById('connections-svg');
 const zoomEl = document.getElementById('zoom-info');
+const saveDot = document.getElementById('save-dot');
+const saveLabel = document.getElementById('save-label');
 
+// ─── SAVE / LOAD ───
+function snapshot() {
+  // Collect current state of every card from the DOM (live content)
+  const cardsData = {};
+  Object.entries(cards).forEach(([id, c]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const data = {
+      id,
+      type: c.type,
+      x: parseFloat(el.style.left),
+      y: parseFloat(el.style.top),
+      w: el.offsetWidth,
+      h: (c.type === 'section') ? el.offsetHeight : null,
+      color: null,
+      content: null,
+      imgSrc: null,
+      linkUrl: null,
+      linkDesc: null,
+      todos: null,
+      sectionLabel: null
+    };
+
+    // Color variant for notes
+    for (const col of ['yellow','blue','green','pink']) {
+      if (el.classList.contains(col)) { data.color = col; break; }
+    }
+
+    if (c.type === 'note') {
+      const ta = el.querySelector('textarea');
+      data.content = ta ? ta.value : '';
+    }
+    if (c.type === 'todo') {
+      data.todos = [];
+      el.querySelectorAll('.todo-item').forEach(item => {
+        const lbl = item.querySelector('label');
+        const chk = item.querySelector('input[type=checkbox]');
+        data.todos.push({ text: lbl ? lbl.textContent : '', done: chk ? chk.checked : false });
+      });
+    }
+    if (c.type === 'image') {
+      const img = el.querySelector('img');
+      data.imgSrc = img ? img.src : null;
+    }
+    if (c.type === 'link') {
+      const urlEl = el.querySelector('.link-url');
+      const descEl = el.querySelector('.link-desc');
+      data.linkUrl = urlEl ? urlEl.textContent : '';
+      data.linkDesc = descEl ? descEl.textContent : '';
+    }
+    if (c.type === 'section') {
+      const lbl = el.querySelector('.section-label');
+      data.sectionLabel = lbl ? lbl.textContent : '';
+    }
+    cardsData[id] = data;
+  });
+
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    view: { scale, panX, panY },
+    cardCount,
+    todoN,
+    cards: cardsData,
+    connections
+  };
+}
+
+function save() {
+  // Visual feedback
+  saveDot.classList.add('saving');
+  saveLabel.textContent = 'Sauvegarde…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      const data = snapshot();
+      localStorage.setItem(DB_KEY, JSON.stringify(data));
+      saveDot.classList.remove('saving');
+      saveLabel.textContent = 'Sauvegardé ✓';
+    } catch(e) {
+      saveLabel.textContent = '⚠️ Erreur';
+      console.warn('Save failed:', e);
+    }
+  }, 400); // debounce 400ms
+}
+
+function schedSave() { save(); }
+
+function loadBoard() {
+  const raw = localStorage.getItem(DB_KEY);
+  if (!raw) return false;
+  try {
+    const data = JSON.parse(raw);
+    if (!data || !data.cards) return false;
+
+    // Restore view
+    if (data.view) { scale = data.view.scale||1; panX = data.view.panX||100; panY = data.view.panY||80; }
+    cardCount = data.cardCount || 0;
+    todoN = data.todoN || 0;
+
+    // Restore cards
+    Object.values(data.cards).forEach(d => {
+      restoreCard(d);
+    });
+
+    // Restore connections (after cards exist)
+    connections = data.connections || [];
+
+    // Restore card count to avoid id collisions
+    cardCount = Math.max(cardCount, Object.keys(data.cards).length);
+
+    return true;
+  } catch(e) {
+    console.warn('Load failed:', e);
+    return false;
+  }
+}
+
+function restoreCard(d) {
+  const el = document.createElement('div');
+  el.className = 'card ' + d.type;
+  el.id = d.id;
+  el.style.left = d.x + 'px';
+  el.style.top = d.y + 'px';
+  el.style.width = d.w + 'px';
+  if (d.h && d.type === 'section') el.style.height = d.h + 'px';
+  if (d.color) el.classList.add(d.color);
+
+  el.innerHTML = cardHTML(d.type, d.id);
+  canvas.appendChild(el);
+  cards[d.id] = { el, type: d.type, x: d.x, y: d.y };
+
+  // Restore content
+  if (d.type === 'note') {
+    const ta = el.querySelector('textarea');
+    if (ta) ta.value = d.content || '';
+  }
+  if (d.type === 'todo') {
+    (d.todos || []).forEach(t => {
+      const item = addTodoItemEl(el, t.text);
+      if (t.done) {
+        const chk = item.querySelector('input[type=checkbox]');
+        if (chk) { chk.checked = true; item.classList.add('done'); }
+      }
+    });
+  }
+  if (d.type === 'image' && d.imgSrc) {
+    const ph = el.querySelector('.img-placeholder');
+    if (ph) {
+      const img = document.createElement('img');
+      img.src = d.imgSrc;
+      ph.replaceWith(img);
+    }
+  }
+  if (d.type === 'link') {
+    const urlEl = el.querySelector('.link-url');
+    const descEl = el.querySelector('.link-desc');
+    if (urlEl) urlEl.textContent = d.linkUrl || 'https://';
+    if (descEl) descEl.textContent = d.linkDesc || '';
+  }
+  if (d.type === 'section') {
+    const lbl = el.querySelector('.section-label');
+    if (lbl) lbl.textContent = d.sectionLabel || 'Section';
+  }
+
+  // Wire up interactivity
+  makeDraggable(el, d.id);
+  addResize(el, d.id);
+  addDot(el, d.id);
+  wireContentListeners(el, d.id, d.type);
+  el.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); ctxCardId=d.id; showCtx(e.clientX,e.clientY); });
+  if (d.type === 'todo') wireTodoAddBtn(el, d.id);
+  if (d.type === 'image') initImg(el, d.id);
+}
+
+// Wire save on content change for a card
+function wireContentListeners(el, id, type) {
+  if (type === 'note') {
+    const ta = el.querySelector('textarea');
+    if (ta) ta.addEventListener('input', schedSave);
+  }
+  if (type === 'todo') {
+    el.querySelectorAll('label[contenteditable]').forEach(l => l.addEventListener('input', schedSave));
+    el.querySelectorAll('input[type=checkbox]').forEach(cb => cb.addEventListener('change', schedSave));
+  }
+  if (type === 'link') {
+    el.querySelectorAll('[contenteditable]').forEach(el2 => el2.addEventListener('input', schedSave));
+  }
+  if (type === 'section') {
+    const lbl = el.querySelector('.section-label');
+    if (lbl) lbl.addEventListener('input', schedSave);
+  }
+}
+
+// ─── TRANSFORM ───
 function applyT() {
   canvas.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
   svg.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
@@ -270,12 +409,11 @@ function applyT() {
   minimap();
 }
 
-// Pan
+// ─── PAN ───
 wrap.addEventListener('mousedown', e => {
   if (e.target !== wrap && e.target !== canvas && !e.target.isSameNode(svg)) return;
   if (e.button === 0 || e.button === 1) {
-    isPanning = true;
-    panStart = {x: e.clientX - panX, y: e.clientY - panY};
+    isPanning = true; panStart = {x: e.clientX - panX, y: e.clientY - panY};
     wrap.style.cursor = 'grabbing';
   }
   closeCtx();
@@ -289,8 +427,12 @@ window.addEventListener('mousemove', e => {
   }
 });
 window.addEventListener('mouseup', () => { isPanning = false; wrap.style.cursor='default'; });
+window.addEventListener('mouseup', () => {
+  // Save after pan ends
+  if (isPanning) schedSave();
+});
 
-// Zoom
+// ─── ZOOM ───
 wrap.addEventListener('wheel', e => {
   e.preventDefault();
   const d = e.deltaY > 0 ? 0.9 : 1.1;
@@ -298,23 +440,18 @@ wrap.addEventListener('wheel', e => {
   const wx = (mx-panX)/scale, wy = (my-panY)/scale;
   scale = Math.min(3, Math.max(0.15, scale*d));
   panX = mx - wx*scale; panY = my - wy*scale;
-  applyT();
+  applyT(); schedSave();
 }, {passive:false});
 
 function cvt(cx,cy) { return {x:(cx-panX)/scale, y:(cy-52-panY)/scale}; }
-function resetView() { scale=1; panX=100; panY=80; applyT(); }
+function resetView() { scale=1; panX=100; panY=80; applyT(); schedSave(); }
 
-// Context menu
+// ─── CONTEXT MENU ───
 wrap.addEventListener('contextmenu', e => {
-  e.preventDefault();
-  ctxPos = cvt(e.clientX, e.clientY);
-  ctxCardId = null;
+  e.preventDefault(); ctxPos = cvt(e.clientX, e.clientY); ctxCardId = null;
   showCtx(e.clientX, e.clientY);
 });
-function showCtx(x,y) {
-  const m = document.getElementById('ctx-menu');
-  m.style.display = 'block'; m.style.left = x+'px'; m.style.top = y+'px';
-}
+function showCtx(x,y) { const m=document.getElementById('ctx-menu'); m.style.display='block'; m.style.left=x+'px'; m.style.top=y+'px'; }
 function closeCtx() { document.getElementById('ctx-menu').style.display='none'; ctxCardId=null; }
 document.addEventListener('click', e => { if (!document.getElementById('ctx-menu').contains(e.target)) closeCtx(); });
 
@@ -326,13 +463,14 @@ function ctxDo(action) {
     if (c && c.el.classList.contains('note')) {
       c.el.classList.remove('yellow','blue','green','pink');
       c.el.classList.add(action);
+      schedSave();
     }
     return;
   }
   addCard(action, ctxPos.x, ctxPos.y);
 }
 
-// Cards
+// ─── CARD CREATION ───
 function addCard(type, x, y) {
   if (x === undefined) { x = (450-panX)/scale + Math.random()*40; y = (220-panY)/scale + Math.random()*40; }
   const id = 'c'+(++cardCount);
@@ -347,10 +485,11 @@ function addCard(type, x, y) {
   makeDraggable(el, id);
   addResize(el, id);
   addDot(el, id);
-  el.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); ctxCardId=id; showCtx(e.clientX,e.clientY); });
-  if (type==='todo') initTodo(el, id);
+  wireContentListeners(el, id, type);
+  el.addEventListener('contextmenu', e=>{ e.preventDefault(); e.stopPropagation(); ctxCardId=id; showCtx(e.clientX,e.clientY); });
+  if (type==='todo') { initTodo(el, id); }
   if (type==='image') initImg(el, id);
-  applyT(); minimap();
+  applyT(); minimap(); schedSave();
   return id;
 }
 
@@ -364,7 +503,7 @@ function cardHTML(type, id) {
   return '';
 }
 
-// Drag
+// ─── DRAG ───
 function makeDraggable(el, id) {
   let drag=false, sx,sy,ox,oy;
   el.addEventListener('mousedown', e => {
@@ -384,19 +523,28 @@ function makeDraggable(el, id) {
     cards[id].x=ox+dx; cards[id].y=oy+dy;
     drawConns(); minimap();
   });
-  window.addEventListener('mouseup', ()=>{ if(!drag)return; drag=false; el.classList.remove('dragging'); el.style.zIndex=''; });
+  window.addEventListener('mouseup', ()=>{
+    if (!drag) return; drag=false;
+    el.classList.remove('dragging'); el.style.zIndex='';
+    schedSave();
+  });
 }
 
-// Resize
+// ─── RESIZE ───
 function addResize(el, id) {
   const rh = document.createElement('div'); rh.className='resize-handle'; el.appendChild(rh);
   let r=false, sx,sy,ow,oh;
   rh.addEventListener('mousedown', e=>{ e.stopPropagation(); r=true; sx=e.clientX; sy=e.clientY; ow=el.offsetWidth; oh=el.offsetHeight; });
-  window.addEventListener('mousemove', e=>{ if(!r)return; el.style.width=Math.max(140,ow+(e.clientX-sx)/scale)+'px'; if(cards[id]&&cards[id].type==='section')el.style.height=Math.max(100,oh+(e.clientY-sy)/scale)+'px'; drawConns(); });
-  window.addEventListener('mouseup',()=>{ r=false; });
+  window.addEventListener('mousemove', e=>{
+    if (!r) return;
+    el.style.width=Math.max(140,ow+(e.clientX-sx)/scale)+'px';
+    if (cards[id]&&cards[id].type==='section') el.style.height=Math.max(100,oh+(e.clientY-sy)/scale)+'px';
+    drawConns();
+  });
+  window.addEventListener('mouseup',()=>{ if(r){r=false;schedSave();} });
 }
 
-// Connect dot
+// ─── CONNECT DOT ───
 function addDot(el, id) {
   const dot = document.createElement('div'); dot.className='connect-dot'; el.appendChild(dot);
   dot.addEventListener('mousedown', e=>{ e.stopPropagation(); startConn(id); });
@@ -416,12 +564,12 @@ function startConn(id) {
 function endConn(toId) {
   if (!connectFrom||connectFrom===toId) { cancelConn(); return; }
   if (!connections.find(c=>(c.f===connectFrom&&c.t===toId)||(c.f===toId&&c.t===connectFrom))) {
-    connections.push({f:connectFrom,t:toId}); drawConns();
+    connections.push({f:connectFrom,t:toId}); drawConns(); schedSave();
   }
   cancelConn();
 }
 function cancelConn() { if(tempLine){tempLine.remove();tempLine=null;} connectFrom=null; }
-function clearConnections() { connections=[]; drawConns(); }
+function clearConnections() { connections=[]; drawConns(); schedSave(); }
 
 wrap.addEventListener('mousedown', e=>{ if(connectFrom&&(e.target===wrap||e.target===canvas)) cancelConn(); });
 
@@ -429,10 +577,7 @@ function center(id) {
   const el=document.getElementById(id); if(!el)return{x:0,y:0};
   return {x:parseFloat(el.style.left)+el.offsetWidth/2, y:parseFloat(el.style.top)+el.offsetHeight/2};
 }
-function bezier(x1,y1,x2,y2) {
-  const dx=Math.abs(x2-x1)*0.5;
-  return `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
-}
+function bezier(x1,y1,x2,y2) { const dx=Math.abs(x2-x1)*0.5; return `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`; }
 function drawConns() {
   svg.querySelectorAll('.connector-path').forEach(p=>p.remove());
   connections.forEach(c=>{
@@ -440,7 +585,7 @@ function drawConns() {
     const f=center(c.f), t=center(c.t);
     const p=document.createElementNS('http://www.w3.org/2000/svg','path');
     p.setAttribute('class','connector-path'); p.setAttribute('d',bezier(f.x,f.y,t.x,t.y));
-    p.addEventListener('click',()=>{ connections=connections.filter(x=>x!==c); drawConns(); });
+    p.addEventListener('click',()=>{ connections=connections.filter(x=>x!==c); drawConns(); schedSave(); });
     svg.appendChild(p);
   });
 }
@@ -449,31 +594,43 @@ function deleteCard(id) {
   const el=document.getElementById(id); if(el)el.remove();
   delete cards[id];
   connections=connections.filter(c=>c.f!==id&&c.t!==id);
-  drawConns(); minimap();
+  drawConns(); minimap(); schedSave();
 }
 
-// Todo
+// ─── TODO ───
 function initTodo(el, id) {
-  addTodoItem(el, 'Première tâche');
-  addTodoItem(el, 'Deuxième tâche');
-  el.querySelector('.todo-add-btn').addEventListener('click', e=>{
+  addTodoItemEl(el, 'Première tâche');
+  addTodoItemEl(el, 'Deuxième tâche');
+  wireTodoAddBtn(el, id);
+}
+function wireTodoAddBtn(el, id) {
+  const btn = el.querySelector('.todo-add-btn');
+  if (!btn) return;
+  // remove old listeners by replacing
+  const newBtn = btn.cloneNode(true);
+  btn.replaceWith(newBtn);
+  newBtn.addEventListener('click', e=>{
     e.stopPropagation();
-    const item = addTodoItem(el, '');
+    const item = addTodoItemEl(el, '');
     const lbl = item.querySelector('label');
     lbl.focus();
     const r=document.createRange(); r.selectNodeContents(lbl);
     window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    schedSave();
   });
 }
-function addTodoItem(el, text) {
+function addTodoItemEl(el, text) {
   const n=++todoN; const div=document.createElement('div'); div.className='todo-item';
   div.innerHTML=`<input type="checkbox" id="td${n}"><label for="td${n}" contenteditable="true" spellcheck="false">${text}</label>`;
-  div.querySelector('input').addEventListener('change',()=>div.classList.toggle('done',div.querySelector('input').checked));
+  const chk = div.querySelector('input');
+  const lbl = div.querySelector('label');
+  chk.addEventListener('change',()=>{ div.classList.toggle('done',chk.checked); schedSave(); });
+  lbl.addEventListener('input', schedSave);
   el.querySelector('.todo-list').appendChild(div);
   return div;
 }
 
-// Image
+// ─── IMAGE ───
 function openImg(id) { document.getElementById(id).querySelector('.img-inp').click(); }
 function initImg(el, id) {
   el.querySelector('.img-inp').addEventListener('change', function(){
@@ -481,12 +638,12 @@ function initImg(el, id) {
     const r=new FileReader(); r.onload=ev=>{
       const ph=el.querySelector('.img-placeholder'); if(!ph)return;
       const img=document.createElement('img'); img.src=ev.target.result;
-      ph.replaceWith(img);
+      ph.replaceWith(img); schedSave();
     }; r.readAsDataURL(this.files[0]);
   });
 }
 
-// Minimap
+// ─── MINIMAP ───
 function minimap() {
   const mc=document.getElementById('mm-canvas');
   const ctx=mc.getContext('2d');
@@ -503,7 +660,51 @@ function minimap() {
   ctx.strokeRect(vx,vy,vw,vh);
 }
 
-// Keyboard
+// ─── JSON EXPORT / IMPORT MODAL ───
+function openExport() {
+  const data = snapshot();
+  document.getElementById('modal-json').value = JSON.stringify(data, null, 2);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function copyJson() {
+  const ta = document.getElementById('modal-json');
+  navigator.clipboard.writeText(ta.value).catch(()=>{ta.select();document.execCommand('copy');});
+  const btn = event.target; btn.textContent='✓ Copié !';
+  setTimeout(()=>{btn.textContent='📋 Copier';},2000);
+}
+function importJson() {
+  const raw = document.getElementById('modal-json').value.trim();
+  try {
+    const data = JSON.parse(raw);
+    if (!data.cards) throw new Error('Format invalide');
+    if (!confirm('Importer ce board ? Le board actuel sera remplacé.')) return;
+    // Clear current board
+    Object.keys(cards).forEach(id=>{ const el=document.getElementById(id); if(el)el.remove(); });
+    cards={}; connections=[]; svg.querySelectorAll('.connector-path').forEach(p=>p.remove());
+    // Load
+    if (data.view) { scale=data.view.scale||1; panX=data.view.panX||100; panY=data.view.panY||80; }
+    cardCount = data.cardCount||0; todoN = data.todoN||0;
+    Object.values(data.cards).forEach(d=>restoreCard(d));
+    connections = data.connections||[];
+    setTimeout(()=>{ drawConns(); minimap(); applyT(); schedSave(); },80);
+    closeModal();
+  } catch(e) { alert('JSON invalide : '+e.message); }
+}
+document.getElementById('modal-overlay').addEventListener('click', e=>{ if(e.target===document.getElementById('modal-overlay'))closeModal(); });
+
+// ─── RESET ───
+function confirmReset() {
+  if (!confirm('Effacer tout le board ? Cette action est irréversible.')) return;
+  Object.keys(cards).forEach(id=>{ const el=document.getElementById(id); if(el)el.remove(); });
+  cards={}; connections=[];
+  svg.querySelectorAll('.connector-path').forEach(p=>p.remove());
+  cardCount=0; todoN=0;
+  localStorage.removeItem(DB_KEY);
+  minimap(); schedSave();
+}
+
+// ─── KEYBOARD ───
 window.addEventListener('keydown', e=>{
   if(e.key==='Escape'){ cancelConn(); connectMode=false; document.getElementById('connect-btn').classList.remove('active'); }
   if((e.key==='n'||e.key==='N')&&!e.target.isContentEditable&&e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='INPUT'){
@@ -511,45 +712,42 @@ window.addEventListener('keydown', e=>{
   }
 });
 
-// Init board
-/*function initBoard() {
+// ─── BOOT ───
+/*function initDefaultBoard() {
   const n1=addCard('note',60,60);
-  const ta1=document.querySelector('#'+n1+' textarea');
-  if(ta1)ta1.value='🎬 Court-métrage\n\nDeux projets à Cannes — storyboard en cours';
+  const ta1=document.querySelector('#'+n1+' textarea'); if(ta1)ta1.value='🎬 Court-métrage\n\nDeux projets à Cannes — storyboard en cours';
   document.getElementById(n1).classList.add('yellow');
-
   const n2=addCard('note',320,40);
-  const ta2=document.querySelector('#'+n2+' textarea');
-  if(ta2)ta2.value='Ambiance sonore :\n• Musique minimaliste\n• Field recordings\n• Silence expressif';
+  const ta2=document.querySelector('#'+n2+' textarea'); if(ta2)ta2.value='Ambiance sonore :\n• Musique minimaliste\n• Field recordings\n• Silence expressif';
   document.getElementById(n2).classList.add('blue');
-
   const n3=addCard('todo',60,240);
-
   const n4=addCard('section',310,210);
-  const sl=document.querySelector('#'+n4+' .section-label');
-  if(sl)sl.textContent='Références visuelles';
-
-  const n5=addCard('image',350,260);
+  const sl=document.querySelector('#'+n4+' .section-label'); if(sl)sl.textContent='Références visuelles';
+  addCard('image',350,260);
   const n6=addCard('note',620,60);
-  const ta6=document.querySelector('#'+n6+' textarea');
-  if(ta6)ta6.value='Le silence\ncomme personnage\nà part entière ✦';
+  const ta6=document.querySelector('#'+n6+' textarea'); if(ta6)ta6.value='Le silence\ncomme personnage\nà part entière ✦';
   document.getElementById(n6).classList.add('pink');
-
-  const n7=addCard('link',620,230);
-
+  addCard('link',620,230);
   setTimeout(()=>{
     connections.push({f:n1,t:n2},{f:n1,t:n3},{f:n2,t:n6});
-    drawConns(); minimap();
+    drawConns(); minimap(); schedSave();
   },120);
-}
+}*/
 
-initBoard();*/
+// Try loading saved board first — only show default if nothing saved
+const loaded = loadBoard();
+if (!loaded) {
+  return;
+} else {
+  // Connections need DOM to be ready
+  setTimeout(()=>{ drawConns(); minimap(); },80);
+}
 applyT();
 
 setTimeout(()=>{
   const tips=document.getElementById('tips');
   tips.style.opacity='0';
-  setTimeout(()=>tips.remove(),1000);
+  setTimeout(()=>{ if(tips.parentNode)tips.remove(); },1000);
 },5000);
 </script>
 </body>
