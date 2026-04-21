@@ -6,1316 +6,815 @@
 <title>QUORIDOR : RIFT WALKERS — 3 JOUEURS</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
-
 :root {
-  --bg: #0a0c12;
-  --bg2: #111520;
-  --panel: #161b28;
-  --border: #2a3350;
-  --border2: #3a4a7a;
-  --p1: #5de4c7;
-  --p1g: #5de4c744;
-  --p2: #ff6b6b;
-  --p2g: #ff6b6b44;
-  --p3: #c97de8;
-  --p3g: #c97de844;
-  --gold: #f7c948;
-  --text: #c8d8ff;
-  --text2: #7a8fb8;
-  --accent: #7c5de4;
-  --green: #5de48a;
-  --red: #e45d5d;
-  --wall-p1: #f7c948;
-  --wall-p2: #ff6b6b;
-  --wall-p3: #c97de8;
+  --bg:#0a0c12; --bg2:#111520; --panel:#161b28; --border:#2a3350; --border2:#3a4a7a;
+  --p0:#5de4c7; --p0g:#5de4c744; --p1:#ff6b6b; --p1g:#ff6b6b44; --p2:#c97de8; --p2g:#c97de844;
+  --gold:#f7c948; --text:#c8d8ff; --text2:#7a8fb8; --green:#5de48a; --red:#e45d5d;
 }
-
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-x: hidden;
-}
-
-body::before {
-  content:'';
-  position:fixed;
-  inset:0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
-  pointer-events:none;
-  z-index:9999;
-}
-
-.screen { display:none; width:100%; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; }
-.screen.active { display:flex; }
-
-/* TITLE */
-#screen-title {
-  background: radial-gradient(ellipse at 50% 30%, #1a1038 0%, #0a0c12 70%);
-  gap:16px;
-}
-.title-logo h1 { font-size:20px; color:var(--p1); text-shadow:0 0 20px var(--p1),0 0 40px #5de4c755; letter-spacing:4px; text-align:center; }
-.title-logo h2 { font-size:9px; color:var(--text2); margin-top:6px; letter-spacing:8px; text-align:center; }
-.title-logo .sub { font-family:'VT323',monospace; font-size:18px; color:var(--gold); margin-top:12px; text-align:center; }
-.title-logo .mode-badge { font-size:7px; color:var(--p3); margin-top:6px; text-align:center; letter-spacing:3px; }
-
-.btn {
-  font-family:'Press Start 2P',monospace;
-  font-size:8px;
-  padding:11px 22px;
-  border:2px solid;
-  cursor:pointer;
-  background:var(--bg2);
-  transition:all .1s;
-  text-transform:uppercase;
-  letter-spacing:1px;
-}
-.btn:active { transform:translate(2px,2px); }
-.btn-primary { border-color:var(--p1); color:var(--p1); box-shadow:0 0 12px var(--p1g); }
-.btn-primary:hover { background:#5de4c718; box-shadow:0 0 22px var(--p1); }
-.btn-red { border-color:var(--red); color:var(--red); }
-.btn-red:hover { background:#e45d5d18; }
-.btn-sm { font-size:7px; padding:8px 14px; }
-.btn-xs { font-size:6px; padding:6px 10px; }
-
-/* GAME */
-#screen-game {
-  padding:10px;
-  flex-direction:row;
-  align-items:flex-start;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:10px;
-  min-height:100vh;
-  background:var(--bg);
-}
-
-.panel-box {
-  background:var(--panel);
-  border:2px solid var(--border);
-  padding:10px;
-}
-.panel-box h3 {
-  font-size:6px;
-  color:var(--text2);
-  border-bottom:1px solid var(--border);
-  padding-bottom:5px;
-  margin-bottom:8px;
-  letter-spacing:2px;
-}
-
-.side-panel { width:170px; display:flex; flex-direction:column; gap:8px; }
-
-.player-card { border:2px solid var(--border); padding:8px; background:var(--panel); }
-.player-card.active-turn { box-shadow: 0 0 14px; }
-.player-card.p1 { border-color:var(--p1); }
-.player-card.p2 { border-color:var(--p2); }
-.player-card.p3 { border-color:var(--p3); }
-.player-card.active-turn.p1 { box-shadow:0 0 14px var(--p1g); }
-.player-card.active-turn.p2 { box-shadow:0 0 14px var(--p2g); }
-.player-card.active-turn.p3 { box-shadow:0 0 14px var(--p3g); }
-.player-card.eliminated { opacity:0.35; }
-
-.pc-name { font-size:7px; margin-bottom:6px; }
-.pc-name.p1 { color:var(--p1); }
-.pc-name.p2 { color:var(--p2); }
-.pc-name.p3 { color:var(--p3); }
-.pc-row { display:flex; justify-content:space-between; font-size:6px; padding:2px 0; color:var(--text2); }
-.pc-row span { color:var(--text); }
-.wall-pips { display:flex; gap:3px; flex-wrap:wrap; margin-top:4px; }
-.wall-pip { width:7px; height:7px; border:1px solid; }
-.wall-pip.p1 { background:var(--wall-p1); border-color:var(--wall-p1); }
-.wall-pip.p2 { background:var(--wall-p2); border-color:var(--wall-p2); }
-.wall-pip.p3 { background:var(--wall-p3); border-color:var(--wall-p3); }
-.wall-pip.used { background:var(--border); border-color:var(--border); }
-
-.game-center { display:flex; flex-direction:column; align-items:center; gap:8px; }
-
-.board-wrap {
-  background:var(--bg2);
-  border:3px solid var(--border2);
-  padding:8px;
-  box-shadow:0 0 40px #7c5de422, inset 0 0 20px #00000044;
-  position:relative;
-}
-
-#board-canvas { display:block; cursor:crosshair; }
-
-.turn-bar {
-  font-size:7px;
-  padding:7px 18px;
-  border:2px solid;
-  text-align:center;
-  transition:all .2s;
-  min-width:260px;
-}
-.turn-bar.t0 { border-color:var(--p1); color:var(--p1); background:#5de4c710; box-shadow:0 0 10px var(--p1g); }
-.turn-bar.t1 { border-color:var(--p2); color:var(--p2); background:#ff6b6b10; box-shadow:0 0 10px var(--p2g); }
-.turn-bar.t2 { border-color:var(--p3); color:var(--p3); background:#c97de810; box-shadow:0 0 10px var(--p3g); }
-.turn-bar.thinking { border-color:var(--gold); color:var(--gold); background:#f7c94810; }
-
-.mode-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-.mode-btn {
-  font-family:'Press Start 2P',monospace;
-  font-size:6px;
-  padding:7px 10px;
-  border:2px solid var(--border);
-  background:var(--bg2);
-  color:var(--text2);
-  cursor:pointer;
-  transition:all .1s;
-}
-.mode-btn:hover { border-color:var(--text2); color:var(--text); }
-.mode-btn.active { border-color:var(--p1); color:var(--p1); background:#5de4c710; }
-.mode-btn.active-wall { border-color:var(--gold); color:var(--gold); background:#f7c94810; }
-
-.log-box {
-  background:var(--panel);
-  border:2px solid var(--border);
-  padding:7px;
-  max-height:120px;
-  overflow-y:auto;
-  scroll-behavior:smooth;
-  width:100%;
-}
-.log-box::-webkit-scrollbar { width:3px; }
-.log-box::-webkit-scrollbar-thumb { background:var(--border2); }
-.log-entry { font-family:'VT323',monospace; font-size:14px; line-height:1.4; color:var(--text2); border-bottom:1px solid #ffffff06; }
-.log-entry.lp0 { color:var(--p1); }
-.log-entry.lp1 { color:var(--p2); }
-.log-entry.lp2 { color:var(--p3); }
-.log-entry.lsys { color:var(--gold); }
-.log-entry.lwarn { color:var(--red); }
-
-.notif {
-  position:fixed;
-  top:18px;
-  left:50%;
-  transform:translateX(-50%);
-  background:var(--panel);
-  border:2px solid var(--gold);
-  padding:9px 18px;
-  font-size:7px;
-  color:var(--gold);
-  z-index:5000;
-  display:none;
-  box-shadow:0 0 18px var(--gold);
-  text-align:center;
-  max-width:320px;
-}
-
-/* RESULT */
-#screen-result { background:var(--bg); padding:20px; flex-direction:column; align-items:center; gap:12px; }
-.result-title { font-size:18px; text-align:center; }
-.result-title.win { color:var(--p1); text-shadow:0 0 30px var(--p1); }
-.result-title.lose { color:var(--red); text-shadow:0 0 30px var(--red); }
-.result-stats { background:var(--panel); border:2px solid var(--border); padding:16px; min-width:260px; }
-.result-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-family:'VT323',monospace; font-size:16px; }
-.result-row .val { color:var(--gold); }
-
-hr.px { border:none; border-top:2px solid var(--border); margin:5px 0; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Press Start 2P',monospace;font-size:8px;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+  pointer-events:none;z-index:9999;}
+.screen{display:none;width:100%;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;}
+.screen.active{display:flex;}
+#screen-title{background:radial-gradient(ellipse at 50% 30%,#1a1038 0%,#0a0c12 70%);gap:16px;}
+.logo h1{font-size:20px;color:var(--p0);text-shadow:0 0 20px var(--p0),0 0 40px #5de4c755;letter-spacing:4px;text-align:center;}
+.logo h2{font-size:9px;color:var(--text2);margin-top:6px;letter-spacing:8px;text-align:center;}
+.logo .sub{font-family:'VT323',monospace;font-size:18px;color:var(--gold);margin-top:10px;text-align:center;}
+.logo .badge{font-size:6px;color:var(--p2);margin-top:6px;text-align:center;letter-spacing:3px;}
+.btn{font-family:'Press Start 2P',monospace;font-size:8px;padding:11px 22px;border:2px solid;
+  cursor:pointer;background:var(--bg2);transition:all .1s;text-transform:uppercase;letter-spacing:1px;}
+.btn:active{transform:translate(2px,2px);}
+.btn-p{border-color:var(--p0);color:var(--p0);box-shadow:0 0 12px var(--p0g);}
+.btn-p:hover{background:#5de4c718;box-shadow:0 0 22px var(--p0);}
+.btn-r{border-color:var(--red);color:var(--red);}
+.btn-r:hover{background:#e45d5d18;}
+.btn-sm{font-size:7px;padding:8px 14px;}
+#screen-game{padding:10px;flex-direction:row;align-items:flex-start;justify-content:center;
+  flex-wrap:wrap;gap:10px;min-height:100vh;background:var(--bg);}
+.pbox{background:var(--panel);border:2px solid var(--border);padding:8px;margin-bottom:6px;}
+.pbox h4{font-size:6px;color:var(--text2);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:6px;letter-spacing:2px;}
+.pname{font-size:7px;margin-bottom:5px;}
+.pname.c0{color:var(--p0);}.pname.c1{color:var(--p1);}.pname.c2{color:var(--p2);}
+.prow{display:flex;justify-content:space-between;font-size:6px;padding:2px 0;color:var(--text2);}
+.prow span{color:var(--text);}
+.wpips{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
+.wpip{width:7px;height:7px;border:1px solid;}
+.wpip.c0{background:var(--gold);border-color:var(--gold);}
+.wpip.c1{background:var(--p1);border-color:var(--p1);}
+.wpip.c2{background:var(--p2);border-color:var(--p2);}
+.wpip.used{background:var(--border);border-color:var(--border);}
+.pcard{border:2px solid var(--border);padding:8px;background:var(--panel);margin-bottom:5px;transition:all .2s;}
+.pcard.act{box-shadow:0 0 14px;}
+.pcard.act.c0{border-color:var(--p0);box-shadow:0 0 14px var(--p0g);}
+.pcard.act.c1{border-color:var(--p1);box-shadow:0 0 14px var(--p1g);}
+.pcard.act.c2{border-color:var(--p2);box-shadow:0 0 14px var(--p2g);}
+.pcard.elim{opacity:.35;}
+.gcenter{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.boardwrap{background:var(--bg2);border:3px solid var(--border2);padding:10px;
+  box-shadow:0 0 40px #7c5de422,inset 0 0 20px #00000044;}
+#bc{display:block;cursor:crosshair;}
+.tbar{font-size:7px;padding:7px 18px;border:2px solid;text-align:center;transition:all .2s;min-width:240px;}
+.tbar.t0{border-color:var(--p0);color:var(--p0);background:#5de4c710;box-shadow:0 0 10px var(--p0g);}
+.tbar.t1{border-color:var(--p1);color:var(--p1);background:#ff6b6b10;box-shadow:0 0 10px var(--p1g);}
+.tbar.t2{border-color:var(--p2);color:var(--p2);background:#c97de810;box-shadow:0 0 10px var(--p2g);}
+.tbar.thinking{border-color:var(--gold);color:var(--gold);background:#f7c94810;}
+.mrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.mbtn{font-family:'Press Start 2P',monospace;font-size:6px;padding:7px 10px;
+  border:2px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .1s;}
+.mbtn:hover{border-color:var(--text2);color:var(--text);}
+.mbtn.am{border-color:var(--p0);color:var(--p0);background:#5de4c710;}
+.mbtn.aw{border-color:var(--gold);color:var(--gold);background:#f7c94810;}
+.logbox{background:var(--panel);border:2px solid var(--border);padding:7px;
+  max-height:110px;overflow-y:auto;scroll-behavior:smooth;width:100%;}
+.logbox::-webkit-scrollbar{width:3px;}
+.logbox::-webkit-scrollbar-thumb{background:var(--border2);}
+.le{font-family:'VT323',monospace;font-size:14px;line-height:1.4;color:var(--text2);}
+.le.l0{color:var(--p0);}.le.l1{color:var(--p1);}.le.l2{color:var(--p2);}
+.le.ls{color:var(--gold);}.le.lw{color:var(--red);}
+.notif{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:var(--panel);
+  border:2px solid var(--gold);padding:9px 18px;font-size:7px;color:var(--gold);z-index:5000;
+  display:none;box-shadow:0 0 18px var(--gold);text-align:center;max-width:320px;}
+#screen-result{background:var(--bg);padding:20px;flex-direction:column;align-items:center;gap:10px;}
+.rtitle{font-size:18px;text-align:center;}
+.rtitle.win{color:var(--p0);text-shadow:0 0 30px var(--p0);}
+.rtitle.lose{color:var(--red);text-shadow:0 0 30px var(--red);}
+.rstats{background:var(--panel);border:2px solid var(--border);padding:14px;min-width:240px;}
+.rrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);
+  font-family:'VT323',monospace;font-size:15px;}
+.rrow .rv{color:var(--gold);}
+.side{width:175px;display:flex;flex-direction:column;gap:0;}
+hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
 </style>
 </head>
 <body>
-
 <div class="notif" id="notif"></div>
 
 <!-- TITLE -->
 <div id="screen-title" class="screen active">
-  <div class="title-logo">
+  <div class="logo">
     <h1>QUORIDOR</h1>
     <h2>RIFT WALKERS</h2>
-    <div class="sub">✦ ROGUELITE STRATÉGIE ✦</div>
-    <div class="mode-badge">▲ MODE 3 JOUEURS — HEXAGONE ▲</div>
+    <div class="sub">✦ HEXAGONE TRIANGULAIRE ✦</div>
+    <div class="badge">▲ 1 JOUEUR vs 2 IA — PLATEAU ATTANGLE ▲</div>
   </div>
   <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:8px">
-    <button class="btn btn-primary" onclick="startGame()">▶ JOUER</button>
-    <button class="btn btn-sm" style="border-color:var(--text2);color:var(--text2)" onclick="showScreen('screen-howto')">? COMMENT JOUER</button>
+    <button class="btn btn-p" onclick="startGame()">▶ JOUER</button>
+    <button class="btn btn-sm" style="border-color:var(--text2);color:var(--text2)" onclick="showScreen('screen-howto')">? RÈGLES</button>
   </div>
-  <div style="margin-top:20px;font-family:'VT323',monospace;font-size:15px;color:var(--text2);text-align:center;line-height:1.9">
-    <span style="color:var(--p1)">■</span> VOUS &nbsp;
-    <span style="color:var(--p2)">■</span> IA ROUGE &nbsp;
-    <span style="color:var(--p3)">■</span> IA VIOLETTE<br>
-    Plateau hexagonal — cases triangulaires<br>
-    <span style="color:var(--gold)">Rejoignez votre coin opposé !</span>
+  <div style="margin-top:20px;font-family:'VT323',monospace;font-size:15px;color:var(--text2);text-align:center;line-height:2">
+    <span style="color:var(--p0)">■</span> VOUS (Cyan) &nbsp;<span style="color:var(--p1)">■</span> IA Rouge &nbsp;<span style="color:var(--p2)">■</span> IA Violette<br>
+    <span style="color:var(--gold)">Rejoignez votre côté opposé !</span>
   </div>
 </div>
 
 <!-- HOW TO PLAY -->
-<div id="screen-howto" class="screen" style="padding:20px;gap:10px;max-width:540px">
-  <h2 style="font-size:9px;color:var(--p1)">COMMENT JOUER</h2>
-  <div class="panel-box" style="width:100%">
-    <h3>PLATEAU</h3>
+<div id="screen-howto" class="screen" style="padding:20px;gap:10px;max-width:520px">
+  <h2 style="font-size:9px;color:var(--p0)">RÈGLES</h2>
+  <div class="pbox" style="width:100%">
+    <h4>PLATEAU</h4>
     <div style="font-family:'VT323',monospace;font-size:15px;line-height:1.9;color:var(--text2)">
-      <div>Hexagone composé de <span style="color:var(--p1)">triangles</span>.</div>
-      <div>Chaque joueur part d'un <span style="color:var(--gold)">coin</span> et doit atteindre le <span style="color:var(--gold)">coin opposé</span>.</div>
-      <div>Les pions se déplacent de triangle en triangle.</div>
-      <div>Les murs bloquent les arêtes entre triangles.</div>
+      <div>Hexagone plat composé de <span style="color:var(--p0)">42 triangles</span>.</div>
+      <div>Les pions bougent de triangle en triangle via les arêtes partagées.</div>
+      <div>Si deux pions se font face, on peut sauter par-dessus.</div>
     </div>
   </div>
-  <div class="panel-box" style="width:100%">
-    <h3>RÈGLES</h3>
+  <div class="pbox" style="width:100%">
+    <h4>À CHAQUE TOUR</h4>
     <div style="font-family:'VT323',monospace;font-size:15px;line-height:1.9;color:var(--text2)">
-      <div>• À votre tour : déplacez-vous OU posez un mur.</div>
-      <div>• Un mur bloque une arête (entre 2 triangles adjacents).</div>
-      <div>• Impossible de complètement enfermer un joueur.</div>
-      <div>• Le premier à atteindre sa zone cible gagne !</div>
-      <div>• Joueurs éliminés si aucun chemin possible.</div>
+      <div>Choisissez : <span style="color:var(--p0)">déplacer</span> votre pion OU <span style="color:var(--gold)">poser un mur</span>.</div>
+      <div>Un mur bloque une arête entre 2 triangles adjacents.</div>
+      <div>Interdit d'enfermer totalement un joueur (BFS).</div>
     </div>
   </div>
-  <div class="panel-box" style="width:100%">
-    <h3>ZONES CIBLES</h3>
+  <div class="pbox" style="width:100%">
+    <h4>OBJECTIFS</h4>
     <div style="font-family:'VT323',monospace;font-size:15px;color:var(--text2);line-height:1.9">
-      <div><span style="color:var(--p1)">VOUS (Cyan)</span> : coin bas-gauche → coin haut-droit</div>
-      <div><span style="color:var(--p2)">IA ROUGE</span> : coin haut → coin bas</div>
-      <div><span style="color:var(--p3)">IA VIOLETTE</span> : coin haut-droit → coin bas-gauche</div>
+      <div><span style="color:var(--p0)">VOUS (▽ bas-centre)</span> → rangée du haut</div>
+      <div><span style="color:var(--p1)">IA ROUGE (▲ haut-droit)</span> → côté bas-gauche</div>
+      <div><span style="color:var(--p2)">IA VIOLETTE (▲ haut-gauche)</span> → côté bas-droit</div>
     </div>
   </div>
-  <button class="btn btn-primary btn-sm" onclick="showScreen('screen-title')">← RETOUR</button>
+  <button class="btn btn-p btn-sm" onclick="showScreen('screen-title')">← RETOUR</button>
 </div>
 
 <!-- GAME -->
 <div id="screen-game" class="screen">
-  <div class="side-panel">
-    <div class="panel-box">
-      <h3>JOUEURS</h3>
-      <div id="player-cards" style="display:flex;flex-direction:column;gap:6px"></div>
+  <div class="side">
+    <div class="pbox">
+      <h4>JOUEURS</h4>
+      <div id="pcards"></div>
     </div>
-    <div class="panel-box">
-      <h3>MODE</h3>
-      <div class="mode-row" style="flex-direction:column;gap:5px">
-        <button class="mode-btn active" id="btn-move" onclick="setMode('move')">🦶 DÉPLACER</button>
-        <button class="mode-btn" id="btn-wall" onclick="setMode('wall')">🧱 POSER MUR</button>
-        <button class="mode-btn" id="btn-wdir" onclick="toggleWallDir()" style="border-color:var(--gold);color:var(--gold);display:none">↔ ARÊTE</button>
+    <div class="pbox">
+      <h4>MODE</h4>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <button class="mbtn am" id="bm" onclick="setMode('move')">🦶 DÉPLACER</button>
+        <button class="mbtn" id="bw" onclick="setMode('wall')">🧱 POSER MUR</button>
       </div>
     </div>
-    <button class="btn btn-red btn-sm" style="width:100%" onclick="if(confirm('Quitter ?'))showScreen('screen-title')">✖ QUITTER</button>
+    <button class="btn btn-r btn-sm" style="width:100%;margin-top:4px" onclick="if(confirm('Quitter ?'))showScreen('screen-title')">✖ QUITTER</button>
   </div>
 
-  <div class="game-center">
-    <div id="turn-bar" class="turn-bar t0">▶ VOTRE TOUR</div>
-    <div class="board-wrap">
-      <canvas id="board-canvas"></canvas>
-    </div>
-    <div class="log-box" id="log-box" style="max-width:580px;width:100%">
-      <div class="log-entry lsys">★ Nouvelle partie — Bonne chance !</div>
+  <div class="gcenter">
+    <div id="tbar" class="tbar t0">▶ VOTRE TOUR</div>
+    <div class="boardwrap"><canvas id="bc"></canvas></div>
+    <div class="logbox" id="logbox" style="max-width:560px;width:100%">
+      <div class="le ls">★ Nouvelle partie — Bonne chance !</div>
     </div>
   </div>
 
-  <div class="side-panel">
-    <div class="panel-box">
-      <h3>TOUR</h3>
-      <div id="round-info" style="font-family:'VT323',monospace;font-size:15px;color:var(--text2)">Tour 1</div>
-    </div>
-    <div class="panel-box">
-      <h3>LÉGENDE</h3>
-      <div style="font-family:'VT323',monospace;font-size:13px;color:var(--text2);line-height:1.9">
-        <div><span style="color:var(--p1)">■</span> Vous (Cyan)</div>
-        <div><span style="color:var(--p2)">■</span> IA Rouge</div>
-        <div><span style="color:var(--p3)">■</span> IA Violette</div>
-        <div style="margin-top:6px"><span style="color:var(--gold)">★</span> Zone cible</div>
-        <div><span style="color:#5de4c755">▓</span> Mouvement valide</div>
-        <div><span style="color:var(--wall-p1)">—</span> Mur posé</div>
+  <div class="side">
+    <div class="pbox">
+      <h4>LÉGENDE</h4>
+      <div style="font-family:'VT323',monospace;font-size:13px;color:var(--text2);line-height:2">
+        <div><span style="color:var(--p0)">◆</span> Vous (Cyan)</div>
+        <div><span style="color:var(--p1)">◆</span> IA Rouge</div>
+        <div><span style="color:var(--p2)">◆</span> IA Violette</div>
+        <hr class="px">
+        <div><span style="color:#5de4c755">▓</span> Case atteignable</div>
+        <div><span style="color:#ffffff33">▓</span> Zone cible</div>
+        <div><span style="color:var(--gold)">—</span> Mur</div>
       </div>
     </div>
-    <div class="panel-box">
-      <h3>INFOS</h3>
-      <div id="info-box" style="font-family:'VT323',monospace;font-size:14px;color:var(--text2);line-height:1.8">Cliquez sur une case surlignée pour vous déplacer.</div>
+    <div class="pbox">
+      <h4>TOUR</h4>
+      <div id="tcount" style="font-family:'VT323',monospace;font-size:15px;color:var(--text2)">Tour 1</div>
+      <hr class="px">
+      <div id="infobox" style="font-family:'VT323',monospace;font-size:13px;color:var(--text2);margin-top:4px;line-height:1.7">
+        Cliquez sur une case surlignée pour vous déplacer.
+      </div>
     </div>
   </div>
 </div>
 
 <!-- RESULT -->
 <div id="screen-result" class="screen">
-  <div class="result-title" id="result-title">VICTOIRE !</div>
-  <div style="font-family:'VT323',monospace;font-size:18px;color:var(--text2)" id="result-sub"></div>
-  <div class="result-stats" id="result-stats"></div>
+  <div class="rtitle" id="rtitle">VICTOIRE !</div>
+  <div style="font-family:'VT323',monospace;font-size:17px;color:var(--text2)" id="rsub"></div>
+  <div class="rstats" id="rstats"></div>
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-    <button class="btn btn-primary btn-sm" onclick="startGame()">↩ REJOUER</button>
-    <button class="btn btn-sm btn-red" onclick="showScreen('screen-title')">✖ MENU</button>
+    <button class="btn btn-p btn-sm" onclick="startGame()">↩ REJOUER</button>
+    <button class="btn btn-sm btn-r" onclick="showScreen('screen-title')">✖ MENU</button>
   </div>
 </div>
 
 <script>
-// =============================================
-// HEXAGONAL TRIANGULAR BOARD — ATTANGLE STYLE
-// =============================================
-// The board is a regular hexagon with 3 triangles per side.
-// Total triangles = 3*side^2 - 3*side + 1 style... but Attangle hex
-// specifically: a hexagon of side 4 (3 triangles per edge) has 
-// a grid of upward and downward triangles filling it.
-//
-// We use axial triangular coordinates.
-// The hex has 6 "edge rows". With 3 per side, that's a hex of radius 3.
-// Approach: build the hex from a row-based triangular grid.
-//
-// Row structure for hex side=3:
-// Row 0: 3 tris (top tip)
-// Row 1: 5 tris
-// Row 2: 7 tris
-// Row 3: 7 tris (middle)
-// Row 4: 7 tris
-// Row 5: 5 tris
-// Row 6: 3 tris (bottom tip)
-// Total: 37 triangles (hexagonal number for n=3 → 3n²+3n+1... let me recalc)
-//
-// Attangle hex(3): each row: 3,5,7,7,7,5,3 = 37 triangles
-// Actually for "3 per side" hexagonal grid of equilateral triangles:
-// The classic Attangle board has 37 cells.
+// ============================================================
+// BOARD GEOMETRY: flat-top hexagon, n=3 triangles per side
+// 6 rows, sizes: [5,7,9,9,7,5] = 42 triangles total
+// isDown(r,c) = (c + Math.floor(r/3)) % 2 === 0
+// ============================================================
+const ROWS = [5,7,9,9,7,5];
+const NROWS = 6;
+const MAX_SIZE = 9;
+const TW = 58;  // triangle base width (px)
+const TH = Math.round(TW * Math.sqrt(3)/2); // height
+const PAD = 24;
 
-const SIDE = 3; // triangles per hex edge
-// Row counts for hex with SIDE=3
-const ROW_SIZES = [3, 5, 7, 7, 7, 5, 3]; // 7 rows, total 37
-const NUM_ROWS = ROW_SIZES.length;
+const offsets = ROWS.map(s => (MAX_SIZE - s) / 2);
 
-// Build cell list: each cell = {id, row, col, up/down, cx, cy, verts}
-// In a triangular grid row r with ROW_SIZES[r] triangles:
-// triangles alternate up (▲) and down (▽)
-// For row r, offset determines if first tri is up or down.
-// Row 0 (3 tris): starts with ▲ → ▲▽▲
-// Row 1 (5 tris): ▲▽▲▽▲
-// Row 2 (7 tris): ▲▽▲▽▲▽▲
-// Rows 3,4: same as 2
-// Row 5: same as 1
-// Row 6: same as 0
+function isDown(r,c){ return (c + Math.floor(r/3)) % 2 === 0; }
 
-// Triangle size
-const TRI_W = 52; // base width
-const TRI_H = Math.round(TRI_W * Math.sqrt(3) / 2); // height
+// Build cells
+let cells = []; // {id, r, c, isDown, verts:[{x,y}x3], cx, cy}
+let cellIndex = {}; // "r,c" -> id
 
-const CANVAS_PAD = 30;
-
-let cells = [];
-let walls = []; // {a: cellId, b: cellId, owner: 0|1|2}
-let G = {};
-
-function buildCells() {
-  cells = [];
-  // The hex has rows 0..6
-  // Row r has ROW_SIZES[r] triangles
-  // The hex is centered; row 0 at top
-  // Total width of row r: ROW_SIZES[r] * TRI_W/2 + TRI_W/2
-  // Actually row r spans ROW_SIZES[r] half-widths + one extra
-  // Center x of cell [r][c]: depends on hex offset and c
-  
-  // For the hex layout, each row is shifted:
-  // Row 0 (3): starts at col offset 3 (hex center - 1.5 tri widths)
-  // Row 1 (5): starts at col offset 2
-  // Row 2 (7): starts at col offset 1
-  // Rows 3,4 (7): same as row 2
-  // Row 5 (5): same as row 1
-  // Row 6 (3): same as row 0
-  
-  // Column offsets (in half-tri units from left edge of full bounding box)
-  // Full bounding width = 7 tris = 7 * TRI_W/2 * 2 = 7*TRI_W
-  // But we use a simpler scheme:
-  // For row r with n tris, the leftmost triangle's left edge is at:
-  // x_offset = (maxTris - n) / 2 * TRI_W/2 ... where maxTris=7
-  
-  // Let me use pixel-based placement:
-  // The full hex bounding box: 7 * (TRI_W/2) wide, 7 rows tall
-  // Each "column slot" = TRI_W/2 wide
-  // For row r with n=ROW_SIZES[r] tris:
-  //   left start slot = (7-n)/2  (centering within 7 slots... actually 7 tris = 14 half-slots)
-  
-  // Let's define: each tri occupies 2 half-slots in x
-  // halfSlotW = TRI_W/2
-  // Row r with n tris: start at half-slot (14-2n)/2 = 7-n from left
-  
-  const maxHalfSlots = 14; // 7 full triangles * 2
-  
-  for (let r = 0; r < NUM_ROWS; r++) {
-    const n = ROW_SIZES[r];
-    const startHSlot = (maxHalfSlots - 2*n) / 2; // = 7-n
-    const rowY_top = CANVAS_PAD + r * TRI_H;
-    
-    for (let c = 0; c < n; c++) {
-      // Triangle c in row r:
-      // In each row, triangles alternate ▲▽▲▽...
-      // In ALL rows (0..6), first triangle (c=0) is always ▲ (pointing up)
-      const isUp = (c % 2 === 0);
-      
-      // Horizontal position:
-      // Each tri in a row occupies half-slot c from startHSlot
-      // The base-left of tri c is at half-slot (startHSlot + c)
-      // In pixels: x_left = (startHSlot + c) * (TRI_W/2)
-      const x_left = CANVAS_PAD + (startHSlot + c) * (TRI_W / 2);
-      const x_right = x_left + TRI_W;
-      const x_mid = x_left + TRI_W / 2;
-      
-      let verts;
-      if (isUp) {
-        // ▲: apex at top, base at bottom
-        verts = [
-          { x: x_mid,   y: rowY_top },          // apex
-          { x: x_left,  y: rowY_top + TRI_H },   // bottom-left
-          { x: x_right, y: rowY_top + TRI_H },   // bottom-right
-        ];
-      } else {
-        // ▽: apex at bottom, base at top
-        verts = [
-          { x: x_left,  y: rowY_top },            // top-left
-          { x: x_right, y: rowY_top },            // top-right
-          { x: x_mid,   y: rowY_top + TRI_H },    // apex bottom
-        ];
-      }
-      
-      const cx = (verts[0].x + verts[1].x + verts[2].x) / 3;
-      const cy = (verts[0].y + verts[1].y + verts[2].y) / 3;
-      
-      cells.push({
-        id: cells.length,
-        row: r, col: c,
-        isUp,
-        verts,
-        cx, cy
-      });
+function buildCells(){
+  cells = []; cellIndex = {};
+  let id = 0;
+  for(let r=0;r<NROWS;r++){
+    for(let c=0;c<ROWS[r];c++){
+      const off = offsets[r];
+      const xL = PAD + (off+c)*(TW/2);
+      const xR = xL + TW;
+      const xM = xL + TW/2;
+      const yT = PAD + r*TH;
+      const yB = yT + TH;
+      const down = isDown(r,c);
+      const verts = down
+        ? [{x:xL,y:yT},{x:xR,y:yT},{x:xM,y:yB}]   // ▽ base top, apex bottom
+        : [{x:xM,y:yT},{x:xL,y:yB},{x:xR,y:yB}];   // ▲ apex top, base bottom
+      const cx=(verts[0].x+verts[1].x+verts[2].x)/3;
+      const cy=(verts[0].y+verts[1].y+verts[2].y)/3;
+      cells.push({id,r,c,isDown:down,verts,cx,cy});
+      cellIndex[r+','+c]=id;
+      id++;
     }
   }
-  
-  // Precompute adjacency
-  buildAdjacency();
 }
 
-// Cell index lookup: row r, col c
-function cellAt(r, c) {
-  if (r < 0 || r >= NUM_ROWS) return null;
-  if (c < 0 || c >= ROW_SIZES[r]) return null;
-  // Sum up previous rows
-  let idx = 0;
-  for (let i = 0; i < r; i++) idx += ROW_SIZES[i];
-  return cells[idx + c];
-}
-function cellId(r, c) {
-  const cell = cellAt(r, c);
-  return cell ? cell.id : -1;
+function cid(r,c){
+  if(r<0||r>=NROWS||c<0||c>=ROWS[r]) return -1;
+  return cellIndex[r+','+c]??-1;
 }
 
-// Adjacency: two triangles are adjacent if they share an edge
-// In a triangular grid:
-// ▲ at (r,c) with c even:
-//   - left neighbor: (r, c-1) if isUp of that = false (▽)
-//   - right neighbor: (r, c+1) if ▽
-//   - "top" neighbor: depends on row structure
-//
-// More precisely, for our hex layout:
-// An ▲ (isUp, even c) shares:
-//   - its bottom-left edge with (r, c-1) which is ▽
-//   - its bottom-right edge with (r, c+1) which is ▽
-//   - its top edge (the one edge going up) with the row above or nothing
-//
-// A ▽ (isDown, odd c) shares:
-//   - its top-left edge with (r, c-1) which is ▲
-//   - its top-right edge with (r, c+1) which is ▲
-//   - its bottom edge with the row below
-//
-// For the hex grid with varying row sizes, the inter-row adjacency:
-// Between row r and row r+1:
-//   if ROW_SIZES[r+1] > ROW_SIZES[r]: expanding rows (top half of hex)
-//     → ▲ at (r, 2k) connects downward to ▽ at (r+1, 2k+1)
-//   if ROW_SIZES[r+1] == ROW_SIZES[r]: middle rows
-//     → ▲ at (r, 2k) connects to ▽ at (r+1, 2k)? Let me think geometrically.
-//   if ROW_SIZES[r+1] < ROW_SIZES[r]: contracting rows (bottom half)
-//     → ▲ at (r, 2k) connects downward to ▽ at (r+1, 2k-1)
+// Build adjacency
+let adj = []; // adj[id] = Set of ids
 
-let adjacency = {}; // cellId -> Set of cellIds
-
-function buildAdjacency() {
-  adjacency = {};
-  cells.forEach(c => { adjacency[c.id] = new Set(); });
-  
-  for (let r = 0; r < NUM_ROWS; r++) {
-    const n = ROW_SIZES[r];
-    for (let c = 0; c < n; c++) {
-      const cell = cellAt(r, c);
-      if (!cell) continue;
-      
-      // Same-row neighbors: left and right
-      if (c > 0) {
-        const left = cellAt(r, c - 1);
-        if (left) { adjacency[cell.id].add(left.id); adjacency[left.id].add(cell.id); }
+function buildAdj(){
+  adj = cells.map(()=>new Set());
+  for(let r=0;r<NROWS;r++){
+    for(let c=0;c<ROWS[r];c++){
+      const id=cid(r,c);
+      // Same-row right
+      if(c+1<ROWS[r]){
+        const n=cid(r,c+1);
+        adj[id].add(n); adj[n].add(id);
       }
-      
-      // Inter-row: only connect ▲ downward (to the row below)
-      if (cell.isUp && r + 1 < NUM_ROWS) {
-        const nr = r + 1;
-        const nSize = ROW_SIZES[nr];
-        const curSize = ROW_SIZES[r];
-        let nc;
-        if (nSize > curSize) {
-          // expanding: ▲ at col c connects to ▽ at nr, col c+1
-          nc = c + 1;
-        } else if (nSize === curSize) {
-          // same size: ▲ at col c connects to ▽ at nr, col c
-          nc = c;
-        } else {
-          // contracting: ▲ at col c connects to ▽ at nr, col c-1
-          nc = c - 1;
-        }
-        const below = cellAt(nr, nc);
-        if (below && !below.isUp) {
-          adjacency[cell.id].add(below.id);
-          adjacency[below.id].add(cell.id);
+      // Inter-row: ▲ connects DOWN to ▽ below
+      if(!isDown(r,c) && r+1<NROWS){
+        const cb = c + offsets[r] - offsets[r+1];
+        if(cb>=0 && cb<ROWS[r+1] && isDown(r+1,cb)){
+          const n=cid(r+1,cb);
+          adj[id].add(n); adj[n].add(id);
         }
       }
     }
   }
 }
 
-// =============================================
-// GOAL ZONES
-// =============================================
-// Player 0 (Cyan): starts at bottom-left corner cluster, goal = top-right corner cluster
-// Player 1 (Red): starts at top corner cluster, goal = bottom corner cluster
-// Player 2 (Purple): starts at top-right, goal = bottom-left
+// ============================================================
+// WALLS: set of blocked edges {a,b} (unordered pair of cell ids)
+// ============================================================
+let walls = new Set(); // "min,max" keys
 
-// Corner clusters for a 7-row hex with ROW_SIZES=[3,5,7,7,7,5,3]:
-// Top corner: row 0 cells (ids 0,1,2)
-// Bottom corner: row 6 cells (ids 34,35,36)
-// Top-left corner cells: row 0 c=0 is top tip... 
-// Actually in our layout with symmetric hex:
-// Let's define corners as the 3 "tip" regions (the pointy ends of the hex)
+function wallKey(a,b){ return Math.min(a,b)+','+Math.max(a,b); }
+function hasWall(a,b){ return walls.has(wallKey(a,b)); }
 
-// The hex has a top tip (row 0), and then two "slanted sides"
-// Top tip: row 0, cells 0,1,2
-// Bottom tip: row 6, cells 0,1,2 (offset from total)
-// Left tip: col 0 cells across rows? No, left/right are edges not tips in this orientation.
-
-// Since our hex is "pointy-top" style (tip at row 0 and row 6):
-// Player 1 (Red): start = top (row 0), goal = bottom (row 6)
-// Player 0 (Cyan): start = bottom-left, goal = top-right → 
-//   bottom-left = left side of bottom half
-//   top-right = right side of top half
-// Player 2 (Purple): start = bottom-right, goal = top-left
-
-// Let's define goal zones as the 3 corner cells (row 0 = top, 
-// row 6 left cells = bottom-left, row 6 right cells = bottom-right)
-
-function getCornerCells(corner) {
-  // corner: 'top', 'botleft', 'botright'
-  switch(corner) {
-    case 'top':
-      // row 0, all 3 cells
-      return [cellId(0,0), cellId(0,1), cellId(0,2)].filter(x=>x>=0);
-    case 'botleft':
-      // row 6, leftmost cell + some row 5 left cells
-      return [cellId(6,0), cellId(5,0)].filter(x=>x>=0);
-    case 'botright':
-      // row 6, rightmost cells
-      return [cellId(6,2), cellId(5,4)].filter(x=>x>=0);
-    case 'bot':
-      return [cellId(6,0), cellId(6,1), cellId(6,2)].filter(x=>x>=0);
-    case 'topleft':
-      return [cellId(0,0), cellId(1,0)].filter(x=>x>=0);
-    case 'topright':
-      return [cellId(0,2), cellId(1,4)].filter(x=>x>=0);
-  }
-  return [];
+function addWall(a,b,owner){
+  walls.add(wallKey(a,b));
+  wallData[wallKey(a,b)]={a,b,owner};
 }
 
-// Start positions: center of each starting zone
-// P0: bottom area center
-// P1: top area center
-// P2: right side area center
+let wallData = {}; // key -> {a,b,owner}
 
-function getStartCell(pid) {
-  switch(pid) {
-    case 0: return cellId(6, 1); // bottom center
-    case 1: return cellId(0, 1); // top center
-    case 2: return cellId(3, 6); // middle right
-  }
-}
-
-function getGoalCells(pid) {
-  switch(pid) {
-    case 0: return getCornerCells('top'); // go to top
-    case 1: return getCornerCells('bot'); // go to bottom
-    case 2: return [cellId(3,0), cellId(2,0), cellId(4,0)].filter(x=>x>=0); // go to left
-  }
-}
-
-// =============================================
-// GAME STATE
-// =============================================
-const PLAYER_COLORS = ['var(--p1)', 'var(--p2)', 'var(--p3)'];
-const PLAYER_WALL_COLORS = ['var(--wall-p1)', 'var(--wall-p2)', 'var(--wall-p3)'];
-const PLAYER_NAMES = ['VOUS', 'IA ROUGE', 'IA VIOLETTE'];
-const PLAYER_CSS = ['p1', 'p2', 'p3'];
-const PLAYER_LOG = ['lp0', 'lp1', 'lp2'];
-
-function initGame() {
-  buildCells();
-  
-  G = {
-    turn: 0, // 0=player, 1=ai1, 2=ai2
-    turnCount: 0,
-    positions: [getStartCell(0), getStartCell(1), getStartCell(2)],
-    walls_remaining: [5, 5, 5],
-    eliminated: [false, false, false],
-    mode: 'move', // 'move','wall'
-    selectedEdge: null,
-    hoverCell: -1,
-    hoverEdge: null,
-    gameOver: false,
-    winner: -1,
-  };
-  
-  walls = [];
-  
-  renderAll();
-  updateHUD();
-  updateTurnBar();
-  buildPlayerCards();
-  clearLog();
-  addLog('★ Nouvelle partie — 3 joueurs !', 'sys');
-  addLog(`Vos sorts : déplacez-vous ou posez des murs.`, '');
-  
-  setMode('move');
-}
-
-// =============================================
-// PATHFINDING
-// =============================================
-function bfsHex(startId, goalIds, blockedIds = []) {
-  if (goalIds.includes(startId)) return { dist: 0, path: [startId] };
-  const goalSet = new Set(goalIds);
-  const blocked = new Set(blockedIds);
+// ============================================================
+// BFS
+// ============================================================
+function bfs(startId, goalSet, blockedPos=[]){
+  const blocked = new Set(blockedPos);
   const visited = new Set([startId]);
-  const queue = [{ id: startId, dist: 0, path: [startId] }];
-  
-  while (queue.length) {
-    const cur = queue.shift();
-    const neighbors = [...(adjacency[cur.id] || [])];
-    for (const nid of neighbors) {
-      if (blocked.has(nid)) continue;
-      if (isWallBetween(cur.id, nid)) continue;
-      if (visited.has(nid)) continue;
+  const queue = [{id:startId,dist:0,path:[startId]}];
+  while(queue.length){
+    const {id,dist,path}=queue.shift();
+    if(goalSet.has(id)) return {dist,path};
+    for(const nid of adj[id]){
+      if(blocked.has(nid)) continue;
+      if(hasWall(id,nid)) continue;
+      if(visited.has(nid)) continue;
       visited.add(nid);
-      const newPath = [...cur.path, nid];
-      if (goalSet.has(nid)) return { dist: cur.dist + 1, path: newPath };
-      queue.push({ id: nid, dist: cur.dist + 1, path: newPath });
+      queue.push({id:nid,dist:dist+1,path:[...path,nid]});
     }
   }
   return null;
 }
 
-function isWallBetween(a, b) {
-  return walls.some(w => (w.a === a && w.b === b) || (w.a === b && w.b === a));
-}
-
-function wallWouldBlock(a, b, pid) {
-  // Check if adding wall a-b would trap anyone
-  const testWalls = [...walls, { a, b, owner: pid }];
-  for (let p = 0; p < 3; p++) {
-    if (G.eliminated[p]) continue;
-    const goals = getGoalCells(p);
-    // Temporarily use test walls
-    const origWalls = walls;
-    walls = testWalls;
-    const path = bfsHex(G.positions[p], goals);
-    walls = origWalls;
-    if (!path) return true;
+function canReachGoal(pid, testA, testB){
+  const origWalls = new Set(walls);
+  const origData = {...wallData};
+  if(testA!==undefined){ walls.add(wallKey(testA,testB)); }
+  let ok = true;
+  for(let p=0;p<3;p++){
+    if(G.elim[p]) continue;
+    if(!bfs(G.pos[p], GOALS[p])){ ok=false; break; }
   }
-  return false;
+  walls = origWalls;
+  wallData = origData;
+  return ok;
 }
 
-// =============================================
-// VALID MOVES
-// =============================================
-function getValidMoves(pid) {
-  const pos = G.positions[pid];
-  const others = G.positions.filter((_, i) => i !== pid && !G.eliminated[i]);
-  const neighbors = [...(adjacency[pos] || [])];
-  const moves = [];
-  
-  for (const nid of neighbors) {
-    if (isWallBetween(pos, nid)) continue;
-    const cell = cells[nid];
-    if (!cell) continue;
-    
-    // Check if another player is there
-    if (others.includes(nid)) {
-      // Jump: continue past that player
-      const jumpNeighbors = [...(adjacency[nid] || [])];
-      for (const jid of jumpNeighbors) {
-        if (jid === pos) continue;
-        if (isWallBetween(nid, jid)) continue;
-        if (others.includes(jid)) continue;
-        moves.push(jid);
-      }
-    } else {
-      moves.push(nid);
-    }
-  }
-  return [...new Set(moves)];
+// ============================================================
+// GOAL ZONES & STARTS
+// ============================================================
+// P0 (Cyan): start = middle of bottom row (5,2), goal = row 0 (all cells)
+// P1 (Red):  start = middle of top-right side (1,6), goal = bottom-left side
+// P2 (Violet): start = middle of top-left side (1,0), goal = bottom-right side
+
+let GOALS;
+function buildGoals(){
+  GOALS = [
+    new Set(Array.from({length:ROWS[0]},(_,c)=>cid(0,c))),   // P0 -> top row
+    new Set([cid(3,0),cid(4,0),cid(5,0)]),                    // P1 -> bottom-left
+    new Set([cid(3,8),cid(4,6),cid(5,4)]),                    // P2 -> bottom-right
+  ];
 }
 
-// =============================================
-// DRAWING
-// =============================================
-const canvas = document.getElementById('board-canvas');
-const ctx = canvas.getContext('2d');
-
-function setupCanvas() {
-  const maxRow = ROW_SIZES.length;
-  const maxCols = Math.max(...ROW_SIZES);
-  const W = CANVAS_PAD * 2 + maxCols * (TRI_W / 2) + TRI_W / 2;
-  const H = CANVAS_PAD * 2 + maxRow * TRI_H;
-  canvas.width = W;
-  canvas.height = H;
+function startPos(){
+  return [cid(5,2), cid(1,6), cid(1,0)];
 }
 
-function renderAll() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // Background
-  ctx.fillStyle = '#111520';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Draw cells
-  cells.forEach(cell => drawCell(cell));
-  
-  // Draw valid move highlights
-  if (!G.gameOver && G.turn === 0 && G.mode === 'move') {
-    const moves = getValidMoves(0);
-    moves.forEach(id => drawHighlight(cells[id], 'move'));
-  }
-  
-  // Draw wall hover
-  if (G.turn === 0 && G.mode === 'wall' && G.hoverEdge) {
-    drawEdgeHighlight(G.hoverEdge.a, G.hoverEdge.b, '#f7c94866', 4);
-  }
-  
-  // Draw walls
-  walls.forEach(w => drawWall(w));
-  
-  // Draw goal zones
-  for (let p = 0; p < 3; p++) {
-    if (!G.eliminated[p]) {
-      getGoalCells(p).forEach(id => {
-        if (cells[id]) drawGoalOverlay(cells[id], p);
-      });
-    }
-  }
-  
-  // Draw pieces
-  for (let p = 2; p >= 0; p--) {
-    if (!G.eliminated[p]) {
-      drawPiece(cells[G.positions[p]], p);
-    }
-  }
-}
+// ============================================================
+// GAME STATE
+// ============================================================
+const PNAMES = ['VOUS','IA ROUGE','IA VIOLETTE'];
+const PCSS   = ['c0','c1','c2'];
+const PLCSS  = ['l0','l1','l2'];
+const PCOLS  = ['#5de4c7','#ff6b6b','#c97de8'];
+const PWALLS_START = 7;
 
-function drawCell(cell) {
-  const { verts, row, col } = cell;
-  
-  // Base fill
-  const isGoal0 = getGoalCells(0).includes(cell.id);
-  const isGoal1 = getGoalCells(1).includes(cell.id);
-  const isGoal2 = getGoalCells(2).includes(cell.id);
-  
-  ctx.beginPath();
-  ctx.moveTo(verts[0].x, verts[0].y);
-  ctx.lineTo(verts[1].x, verts[1].y);
-  ctx.lineTo(verts[2].x, verts[2].y);
-  ctx.closePath();
-  
-  if (isGoal0) ctx.fillStyle = '#0a2030';
-  else if (isGoal1) ctx.fillStyle = '#2a0a0a';
-  else if (isGoal2) ctx.fillStyle = '#1a0a2a';
-  else ctx.fillStyle = (cell.isUp ? '#141824' : '#12161f');
-  ctx.fill();
-  
-  // Border
-  ctx.strokeStyle = '#2a3350';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-}
+let G = {};
 
-function drawGoalOverlay(cell, pid) {
-  const { verts } = cell;
-  const colors = ['#5de4c718', '#ff6b6b18', '#c97de818'];
-  ctx.beginPath();
-  ctx.moveTo(verts[0].x, verts[0].y);
-  ctx.lineTo(verts[1].x, verts[1].y);
-  ctx.lineTo(verts[2].x, verts[2].y);
-  ctx.closePath();
-  ctx.fillStyle = colors[pid];
-  ctx.fill();
-  
-  // Dashed border
-  const borderColors = ['#5de4c766', '#ff6b6b66', '#c97de866'];
-  ctx.strokeStyle = borderColors[pid];
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([3,3]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-}
+function initGame(){
+  buildCells();
+  buildAdj();
+  buildGoals();
+  walls = new Set();
+  wallData = {};
 
-function drawHighlight(cell, type) {
-  if (!cell) return;
-  const { verts } = cell;
-  ctx.beginPath();
-  ctx.moveTo(verts[0].x, verts[0].y);
-  ctx.lineTo(verts[1].x, verts[1].y);
-  ctx.lineTo(verts[2].x, verts[2].y);
-  ctx.closePath();
-  ctx.fillStyle = '#5de4c728';
-  ctx.fill();
-  ctx.strokeStyle = '#5de4c7aa';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([3,3]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-}
+  G = {
+    turn: 0,
+    turnCount: 0,
+    pos: startPos(),
+    wr: [PWALLS_START, PWALLS_START, PWALLS_START], // walls remaining
+    elim: [false,false,false],
+    mode: 'move',
+    hover: -1,
+    hoverEdge: null,
+    gameOver: false,
+    winner: -1,
+  };
 
-function drawPiece(cell, pid) {
-  if (!cell) return;
-  const { cx, cy } = cell;
-  const colors = ['#5de4c7', '#ff6b6b', '#c97de8'];
-  const color = colors[pid];
-  const r = 11;
-  
-  // Glow
-  const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r + 8);
-  grd.addColorStop(0, color + '55');
-  grd.addColorStop(1, 'transparent');
-  ctx.fillStyle = grd;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Diamond shape
-  ctx.fillStyle = color;
-  const s = 10;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - s);
-  ctx.lineTo(cx + s, cy);
-  ctx.lineTo(cx, cy + s);
-  ctx.lineTo(cx - s, cy);
-  ctx.closePath();
-  ctx.fill();
-  
-  // Highlight
-  ctx.fillStyle = '#ffffff55';
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - s + 3);
-  ctx.lineTo(cx + 3, cy - 2);
-  ctx.lineTo(cx, cy - 5);
-  ctx.closePath();
-  ctx.fill();
-  
-  // Player number
-  ctx.fillStyle = '#000000aa';
-  ctx.font = 'bold 9px monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(pid === 0 ? 'V' : pid === 1 ? '1' : '2', cx, cy + 1);
-}
-
-function drawWall(w) {
-  const edge = sharedEdge(cells[w.a], cells[w.b]);
-  if (!edge) return;
-  const wallColors = ['#f7c948', '#ff6b6b', '#c97de8'];
-  ctx.strokeStyle = wallColors[w.owner];
-  ctx.lineWidth = 5;
-  ctx.shadowColor = wallColors[w.owner];
-  ctx.shadowBlur = 6;
-  ctx.beginPath();
-  ctx.moveTo(edge[0].x, edge[0].y);
-  ctx.lineTo(edge[1].x, edge[1].y);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-}
-
-function drawEdgeHighlight(aid, bid, color, width) {
-  const edge = sharedEdge(cells[aid], cells[bid]);
-  if (!edge) return;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.moveTo(edge[0].x, edge[0].y);
-  ctx.lineTo(edge[1].x, edge[1].y);
-  ctx.stroke();
-}
-
-function sharedEdge(ca, cb) {
-  if (!ca || !cb) return null;
-  // Find 2 vertices shared between the two triangles
-  const shared = [];
-  for (const va of ca.verts) {
-    for (const vb of cb.verts) {
-      if (Math.abs(va.x - vb.x) < 2 && Math.abs(va.y - vb.y) < 2) {
-        shared.push(va);
-        break;
-      }
-    }
-  }
-  return shared.length === 2 ? shared : null;
-}
-
-// =============================================
-// INPUT
-// =============================================
-function pointInTriangle(px, py, cell) {
-  const [a, b, c] = cell.verts;
-  function sign(p1, p2, p3) {
-    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
-  }
-  const d1 = sign({x:px,y:py}, a, b);
-  const d2 = sign({x:px,y:py}, b, c);
-  const d3 = sign({x:px,y:py}, c, a);
-  const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-  const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-  return !(hasNeg && hasPos);
-}
-
-function getCellAt(px, py) {
-  for (const cell of cells) {
-    if (pointInTriangle(px, py, cell)) return cell.id;
-  }
-  return -1;
-}
-
-function getNearestEdge(px, py) {
-  // Find the two cells closest to cursor and check if they're adjacent
-  let best = null, bestDist = Infinity;
-  for (let i = 0; i < cells.length; i++) {
-    const ci = cells[i];
-    for (const nid of adjacency[ci.id]) {
-      if (nid <= ci.id) continue; // avoid duplicates
-      const cn = cells[nid];
-      const edge = sharedEdge(ci, cn);
-      if (!edge) continue;
-      // Distance from point to edge midpoint
-      const mx = (edge[0].x + edge[1].x) / 2;
-      const my = (edge[0].y + edge[1].y) / 2;
-      const d = (px - mx) ** 2 + (py - my) ** 2;
-      if (d < bestDist) { bestDist = d; best = { a: ci.id, b: nid }; }
-    }
-  }
-  return bestDist < (TRI_W * 0.6) ** 2 ? best : null;
-}
-
-canvas.addEventListener('mousemove', (e) => {
-  if (G.turn !== 0 || G.gameOver) return;
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const my = (e.clientY - rect.top) * scaleY;
-  
-  if (G.mode === 'move') {
-    G.hoverCell = getCellAt(mx, my);
-    G.hoverEdge = null;
-  } else {
-    G.hoverEdge = getNearestEdge(mx, my);
-    G.hoverCell = -1;
-  }
   renderAll();
-});
+  buildPCards();
+  updateTBar();
+  clearLog();
+  addLog('★ Nouvelle partie !','s');
+  addLog('P0→haut | IA1→bas-gauche | IA2→bas-droite','s');
+  setMode('move');
+}
 
-canvas.addEventListener('mouseleave', () => {
-  G.hoverCell = -1; G.hoverEdge = null; renderAll();
-});
-
-canvas.addEventListener('click', (e) => {
-  if (G.turn !== 0 || G.gameOver) return;
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const my = (e.clientY - rect.top) * scaleY;
-  
-  if (G.mode === 'move') {
-    const cid = getCellAt(mx, my);
-    if (cid >= 0) {
-      const valid = getValidMoves(0);
-      if (valid.includes(cid)) {
-        doMove(0, cid);
-      } else {
-        showNotif('Case invalide !');
+// ============================================================
+// VALID MOVES
+// ============================================================
+function validMoves(pid){
+  const pos = G.pos[pid];
+  const others = G.pos.filter((_,i)=>i!==pid && !G.elim[i]);
+  const moves = [];
+  for(const nid of adj[pos]){
+    if(hasWall(pos,nid)) continue;
+    if(others.includes(nid)){
+      // Jump over
+      for(const jid of adj[nid]){
+        if(jid===pos) continue;
+        if(hasWall(nid,jid)) continue;
+        if(others.includes(jid)) continue;
+        if(!moves.includes(jid)) moves.push(jid);
       }
-    }
-  } else if (G.mode === 'wall') {
-    const edge = getNearestEdge(mx, my);
-    if (edge) {
-      doWall(0, edge.a, edge.b);
     } else {
-      showNotif('Arête invalide !');
+      if(!moves.includes(nid)) moves.push(nid);
     }
   }
-});
+  return moves;
+}
 
-// =============================================
+// ============================================================
 // ACTIONS
-// =============================================
-function doMove(pid, targetId) {
-  G.positions[pid] = targetId;
+// ============================================================
+function doMove(pid, targetId){
+  G.pos[pid] = targetId;
   const cell = cells[targetId];
-  addLog(`${PLAYER_NAMES[pid]} → case (${cell.row},${cell.col})`, PLAYER_LOG[pid]);
-  
-  renderAll(); updateHUD(); buildPlayerCards();
-  
-  if (checkWin(pid)) return;
+  addLog(`${PNAMES[pid]} → (${cell.r},${cell.c})`, PLCSS[pid]);
+  renderAll(); buildPCards();
+  if(checkWin(pid)) return;
   nextTurn();
 }
 
-function doWall(pid, a, b) {
-  if (G.walls_remaining[pid] <= 0) { showNotif('Plus de murs !'); return; }
-  
-  // Check not already a wall
-  if (isWallBetween(a, b)) { showNotif('Mur déjà là !'); return; }
-  
-  // Check legality
-  if (wallWouldBlock(a, b, pid)) { showNotif('Illégal : chemin bloqué !'); return; }
-  
-  walls.push({ a, b, owner: pid });
-  G.walls_remaining[pid]--;
-  addLog(`${PLAYER_NAMES[pid]} pose un mur`, PLAYER_LOG[pid]);
-  
-  renderAll(); updateHUD(); buildPlayerCards();
-  checkEliminations();
+function doWall(pid, a, b){
+  if(G.wr[pid]<=0){ notify('Plus de murs !'); return; }
+  if(hasWall(a,b)){ notify('Mur déjà là !'); return; }
+  // Legality check
+  if(!canReachGoal(-1,a,b)){ notify('Illégal : chemin bloqué !'); return; }
+  addWall(a,b,pid);
+  G.wr[pid]--;
+  addLog(`${PNAMES[pid]} pose un mur`, PLCSS[pid]);
+  renderAll(); buildPCards();
   nextTurn();
 }
 
-function checkWin(pid) {
-  const goals = getGoalCells(pid);
-  if (goals.includes(G.positions[pid])) {
-    G.gameOver = true;
-    G.winner = pid;
-    addLog(`★★★ ${PLAYER_NAMES[pid]} GAGNE ! ★★★`, 'sys');
+function checkWin(pid){
+  if(GOALS[pid].has(G.pos[pid])){
+    G.gameOver=true; G.winner=pid;
+    addLog(`★★★ ${PNAMES[pid]} GAGNE ! ★★★`,'s');
     renderAll();
-    setTimeout(() => showResult(pid), 800);
+    setTimeout(()=>showResult(pid),900);
     return true;
   }
   return false;
 }
 
-function checkEliminations() {
-  for (let p = 0; p < 3; p++) {
-    if (G.eliminated[p]) continue;
-    const goals = getGoalCells(p);
-    const path = bfsHex(G.positions[p], goals);
-    if (!path) {
-      G.eliminated[p] = true;
-      addLog(`✖ ${PLAYER_NAMES[p]} est éliminé(e) !`, 'warn');
-    }
-  }
-  const alive = G.eliminated.filter(e => !e).length;
-  if (alive <= 1) {
-    const winner = G.eliminated.findIndex(e => !e);
-    G.gameOver = true;
-    G.winner = winner;
-    setTimeout(() => showResult(winner), 800);
-  }
-}
-
-// =============================================
-// AI
-// =============================================
-function nextTurn() {
-  G.turn = (G.turn + 1) % 3;
+function nextTurn(){
+  G.turn=(G.turn+1)%3;
   G.turnCount++;
-  
-  // Skip eliminated
-  let safety = 0;
-  while (G.eliminated[G.turn] && safety < 3) {
-    G.turn = (G.turn + 1) % 3;
-    safety++;
-  }
-  
-  updateTurnBar(); updateHUD(); buildPlayerCards();
+  let safety=0;
+  while(G.elim[G.turn]&&safety<3){ G.turn=(G.turn+1)%3; safety++; }
+  buildPCards(); updateTBar();
   setMode('move');
-  
-  if (G.turn !== 0 && !G.gameOver) {
-    updateTurnBar(true);
-    setTimeout(() => aiPlay(G.turn), 600 + Math.random() * 400);
+  if(G.turn!==0 && !G.gameOver){
+    updateTBar(true);
+    setTimeout(()=>aiPlay(G.turn), 650+Math.random()*350);
   }
 }
 
-function aiPlay(pid) {
-  if (G.gameOver || G.eliminated[pid]) { nextTurn(); return; }
-  
-  const goals = getGoalCells(pid);
-  const myPath = bfsHex(G.positions[pid], goals, 
-    G.positions.filter((_,i) => i !== pid && !G.eliminated[i]));
-  
-  const level = pid + 1; // AI 1 is easier, AI 2 slightly harder
-  
-  // Decide: move or wall?
-  let decidedWall = false;
-  
-  if (G.walls_remaining[pid] > 0 && level >= 2 && Math.random() < 0.35) {
-    // Try to place a wall on a human's shortest path
-    const humanPath = bfsHex(G.positions[0], getGoalCells(0));
-    if (humanPath && humanPath.path.length >= 2 && !G.eliminated[0]) {
-      // Try blocking human's path
-      for (let i = 0; i < Math.min(3, humanPath.path.length - 1); i++) {
-        const a = humanPath.path[i], b = humanPath.path[i + 1];
-        if (!isWallBetween(a, b) && !wallWouldBlock(a, b, pid)) {
-          walls.push({ a, b, owner: pid });
-          G.walls_remaining[pid]--;
-          addLog(`${PLAYER_NAMES[pid]} pose un mur`, PLAYER_LOG[pid]);
-          renderAll(); updateHUD(); buildPlayerCards();
-          checkEliminations();
-          decidedWall = true;
+// ============================================================
+// AI
+// ============================================================
+function aiPlay(pid){
+  if(G.gameOver||G.elim[pid]){ nextTurn(); return; }
+  const goals = GOALS[pid];
+  const others = G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
+  const myPath = bfs(G.pos[pid], goals, others);
+
+  // Decide: wall or move?
+  const shouldWall = G.wr[pid]>0 && Math.random()<0.35;
+  let placed = false;
+
+  if(shouldWall){
+    // Find human's shortest path and try to block one edge
+    const humanPath = bfs(G.pos[0], GOALS[0], G.pos.filter((_,i)=>i>0&&!G.elim[i]));
+    if(humanPath && humanPath.path.length>=2 && !G.elim[0]){
+      for(let i=0;i<Math.min(4,humanPath.path.length-1);i++){
+        const a=humanPath.path[i], b=humanPath.path[i+1];
+        if(!hasWall(a,b) && canReachGoal(-1,a,b)){
+          addWall(a,b,pid);
+          G.wr[pid]--;
+          addLog(`${PNAMES[pid]} pose un mur`, PLCSS[pid]);
+          renderAll(); buildPCards();
+          placed=true;
           break;
         }
       }
     }
   }
-  
-  if (!decidedWall) {
-    // Move along shortest path
-    if (myPath && myPath.path.length >= 2) {
+
+  if(!placed){
+    if(myPath && myPath.path.length>=2){
       let nextId = myPath.path[1];
-      // Avoid other players' positions
-      const others = G.positions.filter((_,i) => i !== pid && !G.eliminated[i]);
-      if (others.includes(nextId)) {
-        // Jump or pick alternate
-        const valid = getValidMoves(pid);
-        if (valid.length > 0) nextId = valid[0];
-        else { nextTurn(); return; }
+      const allOthers = G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
+      if(allOthers.includes(nextId)){
+        const vm = validMoves(pid);
+        nextId = vm.length>0 ? vm[0] : -1;
       }
-      doMove(pid, nextId);
-      return;
-    } else {
-      // No path (shouldn't happen unless eliminated), just pick random valid move
-      const valid = getValidMoves(pid);
-      if (valid.length > 0) { doMove(pid, valid[0]); return; }
+      if(nextId>=0){ doMove(pid,nextId); return; }
+    }
+    const vm = validMoves(pid);
+    if(vm.length>0){ doMove(pid,vm[0]); return; }
+  }
+
+  if(!G.gameOver) nextTurn();
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+const canvas = document.getElementById('bc');
+const ctx    = canvas.getContext('2d');
+
+function setupCanvas(){
+  canvas.width  = PAD*2 + MAX_SIZE*(TW/2) + TW/2;
+  canvas.height = PAD*2 + NROWS*TH;
+}
+
+function renderAll(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#111520';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Draw all cells
+  cells.forEach(cell=>drawCell(cell));
+
+  // Valid move highlights (player's turn)
+  if(!G.gameOver && G.turn===0 && G.mode==='move'){
+    validMoves(0).forEach(id=>drawCellHL(cells[id],'#5de4c730','#5de4c7aa'));
+  }
+
+  // Wall hover
+  if(G.turn===0 && G.mode==='wall' && G.hoverEdge){
+    drawEdgeHL(G.hoverEdge.a, G.hoverEdge.b, '#f7c94888', 5);
+  }
+
+  // Draw walls
+  for(const key of walls){
+    const w = wallData[key];
+    if(w) drawWall(w);
+  }
+
+  // Goal overlays
+  const goalCols = ['#5de4c712','#ff6b6b12','#c97de812'];
+  const goalBorder = ['#5de4c755','#ff6b6b55','#c97de855'];
+  for(let p=0;p<3;p++){
+    if(!G.elim[p]){
+      for(const id of GOALS[p]){
+        drawCellHL(cells[id], goalCols[p], goalBorder[p]);
+      }
     }
   }
-  
-  if (!G.gameOver) nextTurn();
+
+  // Pieces
+  for(let p=2;p>=0;p--){
+    if(!G.elim[p]) drawPiece(cells[G.pos[p]], p);
+  }
 }
 
-// =============================================
-// UI
-// =============================================
-function setMode(m) {
-  if (G.turn !== 0 || G.gameOver) return;
-  G.mode = m;
-  G.activeSpell = null;
-  document.getElementById('btn-move').className = 'mode-btn' + (m === 'move' ? ' active' : '');
-  document.getElementById('btn-wall').className = 'mode-btn' + (m === 'wall' ? ' active-wall' : '');
-  document.getElementById('btn-wdir').style.display = 'none';
-  G.hoverEdge = null;
+function drawCell(cell){
+  const {verts,isDown:down} = cell;
+  ctx.beginPath();
+  ctx.moveTo(verts[0].x,verts[0].y);
+  ctx.lineTo(verts[1].x,verts[1].y);
+  ctx.lineTo(verts[2].x,verts[2].y);
+  ctx.closePath();
+  ctx.fillStyle = down ? '#141824' : '#12161f';
+  ctx.fill();
+  ctx.strokeStyle='#2a3350';
+  ctx.lineWidth=1;
+  ctx.stroke();
+}
+
+function drawCellHL(cell, fill, stroke){
+  if(!cell) return;
+  const {verts}=cell;
+  ctx.beginPath();
+  ctx.moveTo(verts[0].x,verts[0].y);
+  ctx.lineTo(verts[1].x,verts[1].y);
+  ctx.lineTo(verts[2].x,verts[2].y);
+  ctx.closePath();
+  ctx.fillStyle=fill; ctx.fill();
+  ctx.strokeStyle=stroke; ctx.lineWidth=1.5;
+  ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+}
+
+function drawPiece(cell, pid){
+  if(!cell) return;
+  const {cx,cy}=cell;
+  const col=PCOLS[pid];
+  const r=11;
+  // Glow
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r+8);
+  g.addColorStop(0,col+'55'); g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,r+8,0,Math.PI*2); ctx.fill();
+  // Diamond
+  const s=10;
+  ctx.fillStyle=col;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-s); ctx.lineTo(cx+s,cy); ctx.lineTo(cx,cy+s); ctx.lineTo(cx-s,cy);
+  ctx.closePath(); ctx.fill();
+  // Shine
+  ctx.fillStyle='#ffffff44';
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-s+3); ctx.lineTo(cx+3,cy-2); ctx.lineTo(cx,cy-5);
+  ctx.closePath(); ctx.fill();
+  // Label
+  ctx.fillStyle='#00000088'; ctx.font='bold 8px monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(pid===0?'V':pid===1?'1':'2',cx,cy+1);
+}
+
+function drawWall(w){
+  const edge=sharedEdge(cells[w.a],cells[w.b]);
+  if(!edge) return;
+  const wc=['#f7c948','#ff6b6b','#c97de8'][w.owner];
+  ctx.strokeStyle=wc; ctx.lineWidth=5;
+  ctx.shadowColor=wc; ctx.shadowBlur=6;
+  ctx.beginPath();
+  ctx.moveTo(edge[0].x,edge[0].y);
+  ctx.lineTo(edge[1].x,edge[1].y);
+  ctx.stroke(); ctx.shadowBlur=0;
+}
+
+function drawEdgeHL(a,b,col,lw){
+  const edge=sharedEdge(cells[a],cells[b]);
+  if(!edge) return;
+  ctx.strokeStyle=col; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(edge[0].x,edge[0].y); ctx.lineTo(edge[1].x,edge[1].y); ctx.stroke();
+}
+
+function sharedEdge(ca,cb){
+  if(!ca||!cb) return null;
+  const shared=[];
+  for(const va of ca.verts){
+    for(const vb of cb.verts){
+      if(Math.abs(va.x-vb.x)<2 && Math.abs(va.y-vb.y)<2){ shared.push(va); break; }
+    }
+  }
+  return shared.length===2 ? shared : null;
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+function ptInTri(px,py,cell){
+  const [a,b,c]=cell.verts;
+  const s1=(px-c.x)*(a.y-c.y)-(a.x-c.x)*(py-c.y);
+  const s2=(px-a.x)*(b.y-a.y)-(b.x-a.x)*(py-a.y);
+  const s3=(px-b.x)*(c.y-b.y)-(c.x-b.x)*(py-b.y);
+  return !((s1<0||s2<0||s3<0)&&(s1>0||s2>0||s3>0));
+}
+
+function getCellAt(mx,my){
+  for(const cell of cells){ if(ptInTri(mx,my,cell)) return cell.id; }
+  return -1;
+}
+
+function getNearestEdge(mx,my){
+  let best=null, bd=Infinity;
+  for(let i=0;i<cells.length;i++){
+    for(const nid of adj[i]){
+      if(nid<=i) continue;
+      const edge=sharedEdge(cells[i],cells[nid]);
+      if(!edge) continue;
+      const ex=(edge[0].x+edge[1].x)/2, ey=(edge[0].y+edge[1].y)/2;
+      const d=(mx-ex)**2+(my-ey)**2;
+      if(d<bd){ bd=d; best={a:i,b:nid}; }
+    }
+  }
+  return bd<(TW*0.65)**2 ? best : null;
+}
+
+function getScale(){
+  const rect=canvas.getBoundingClientRect();
+  return {sx:canvas.width/rect.width, sy:canvas.height/rect.height};
+}
+
+canvas.addEventListener('mousemove',e=>{
+  if(G.turn!==0||G.gameOver) return;
+  const rect=canvas.getBoundingClientRect();
+  const {sx,sy}=getScale();
+  const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
+  if(G.mode==='move'){ G.hover=getCellAt(mx,my); G.hoverEdge=null; }
+  else { G.hoverEdge=getNearestEdge(mx,my); G.hover=-1; }
   renderAll();
-  
-  const info = document.getElementById('info-box');
-  if (m === 'move') info.textContent = 'Cliquez sur une case surlignée pour vous déplacer.';
-  else info.textContent = 'Survolez une arête entre deux cases, puis cliquez pour poser un mur.';
-}
+});
 
-function toggleWallDir() {} // Not needed for edge-based walls
+canvas.addEventListener('mouseleave',()=>{ G.hover=-1; G.hoverEdge=null; renderAll(); });
 
-function updateTurnBar(thinking = false) {
-  const el = document.getElementById('turn-bar');
-  if (G.gameOver) { el.textContent = '— FIN DE PARTIE —'; el.className = 'turn-bar thinking'; return; }
-  if (thinking || G.turn !== 0) {
-    const name = PLAYER_NAMES[G.turn];
-    el.textContent = `⟳ ${name} RÉFLÉCHIT...`;
-    el.className = 'turn-bar thinking';
+canvas.addEventListener('click',e=>{
+  if(G.turn!==0||G.gameOver) return;
+  const rect=canvas.getBoundingClientRect();
+  const {sx,sy}=getScale();
+  const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
+  if(G.mode==='move'){
+    const cId=getCellAt(mx,my);
+    if(cId>=0){
+      if(validMoves(0).includes(cId)) doMove(0,cId);
+      else notify('Case non atteignable !');
+    }
   } else {
-    el.textContent = '▶ VOTRE TOUR';
-    el.className = 'turn-bar t0';
+    const edge=getNearestEdge(mx,my);
+    if(edge) doWall(0,edge.a,edge.b);
+    else notify('Cliquez près d\'une arête !');
   }
-}
+});
 
-function buildPlayerCards() {
-  const container = document.getElementById('player-cards');
-  container.innerHTML = '';
-  for (let p = 0; p < 3; p++) {
-    const div = document.createElement('div');
-    const isActive = G.turn === p && !G.gameOver;
-    div.className = `player-card ${PLAYER_CSS[p]} ${isActive ? 'active-turn' : ''} ${G.eliminated[p] ? 'eliminated' : ''}`;
-    
-    const goals = getGoalCells(p);
-    const pathData = G.eliminated[p] ? null : bfsHex(G.positions[p], goals);
-    const dist = pathData ? pathData.dist : '∞';
-    const cell = cells[G.positions[p]];
-    
-    div.innerHTML = `
-      <div class="pc-name ${PLAYER_CSS[p]}">${G.eliminated[p] ? '✖ ' : isActive ? '▶ ' : ''}${PLAYER_NAMES[p]}</div>
-      <div class="pc-row"><span>Dist. cible</span><span>${dist}</span></div>
-      <div class="pc-row"><span>Position</span><span>(${cell ? cell.row : '?'},${cell ? cell.col : '?'})</span></div>
-      <div class="pc-row"><span>Murs</span><span>${G.walls_remaining[p]}</span></div>
-      <div class="wall-pips">${Array.from({length:5},(_,i)=>`<div class="wall-pip ${PLAYER_CSS[p]} ${i>=G.walls_remaining[p]?'used':''}"></div>`).join('')}</div>
-    `;
-    container.appendChild(div);
+// Touch support
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(G.turn!==0||G.gameOver) return;
+  const rect=canvas.getBoundingClientRect();
+  const {sx,sy}=getScale();
+  const t=e.changedTouches[0];
+  const mx=(t.clientX-rect.left)*sx, my=(t.clientY-rect.top)*sy;
+  if(G.mode==='move'){
+    const cId=getCellAt(mx,my);
+    if(cId>=0){
+      if(validMoves(0).includes(cId)) doMove(0,cId);
+      else notify('Case non atteignable !');
+    }
+  } else {
+    const edge=getNearestEdge(mx,my);
+    if(edge) doWall(0,edge.a,edge.b);
   }
+},{passive:false});
+
+// ============================================================
+// UI
+// ============================================================
+function setMode(m){
+  if(G.turn!==0&&m!=='move') return;
+  G.mode=m;
+  G.hoverEdge=null;
+  document.getElementById('bm').className='mbtn'+(m==='move'?' am':'');
+  document.getElementById('bw').className='mbtn'+(m==='wall'?' aw':'');
+  renderAll();
+  const ib=document.getElementById('infobox');
+  if(m==='move') ib.textContent='Cliquez sur une case surlignée.';
+  else ib.textContent='Survolez une arête entre deux cases puis cliquez.';
 }
 
-function updateHUD() {
-  document.getElementById('round-info').textContent = `Tour ${G.turnCount + 1}`;
+function updateTBar(thinking=false){
+  const el=document.getElementById('tbar');
+  if(G.gameOver){ el.textContent='— FIN DE PARTIE —'; el.className='tbar thinking'; return; }
+  if(thinking||G.turn!==0){ el.textContent=`⟳ ${PNAMES[G.turn]} RÉFLÉCHIT...`; el.className='tbar thinking'; }
+  else { el.textContent='▶ VOTRE TOUR'; el.className='tbar t0'; }
 }
 
-function addLog(msg, type = '') {
-  const box = document.getElementById('log-box');
-  const div = document.createElement('div');
-  div.className = `log-entry ${type}`;
-  div.textContent = `> ${msg}`;
+function buildPCards(){
+  const el=document.getElementById('pcards');
+  el.innerHTML='';
+  for(let p=0;p<3;p++){
+    const isAct=G.turn===p&&!G.gameOver;
+    const div=document.createElement('div');
+    div.className=`pcard ${PCSS[p]} ${isAct?'act':''} ${G.elim[p]?'elim':''}`;
+    const path=G.elim[p]?null:bfs(G.pos[p],GOALS[p]);
+    const dist=path?path.dist:'∞';
+    const cell=cells[G.pos[p]];
+    div.innerHTML=`<div class="pname ${PCSS[p]}">${G.elim[p]?'✖ ':isAct?'▶ ':''}${PNAMES[p]}</div>
+      <div class="prow"><span>Dist. cible</span><span>${dist}</span></div>
+      <div class="prow"><span>Murs</span><span>${G.wr[p]}/${PWALLS_START}</span></div>
+      <div class="wpips">${Array.from({length:PWALLS_START},(_,i)=>`<div class="wpip ${PCSS[p]} ${i>=G.wr[p]?'used':''}"></div>`).join('')}</div>`;
+    el.appendChild(div);
+  }
+  document.getElementById('tcount').textContent=`Tour ${G.turnCount+1}`;
+}
+
+function addLog(msg,type=''){
+  const box=document.getElementById('logbox');
+  const div=document.createElement('div');
+  div.className='le'+(type?' l'+type:'');
+  div.textContent='> '+msg;
   box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
+  box.scrollTop=box.scrollHeight;
+}
+function clearLog(){ document.getElementById('logbox').innerHTML=''; }
+
+function notify(msg){
+  const n=document.getElementById('notif');
+  n.textContent=msg; n.style.display='block';
+  clearTimeout(n._t); n._t=setTimeout(()=>n.style.display='none',2000);
 }
 
-function clearLog() {
-  document.getElementById('log-box').innerHTML = '';
-}
-
-function showNotif(msg) {
-  const n = document.getElementById('notif');
-  n.textContent = msg;
-  n.style.display = 'block';
-  clearTimeout(n._t);
-  n._t = setTimeout(() => { n.style.display = 'none'; }, 2000);
-}
-
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-function showResult(winner) {
-  const titles = ['🏆 VICTOIRE !', '💀 DÉFAITE', '💀 DÉFAITE'];
-  const subs = [
-    'Vous avez atteint votre objectif !',
-    'L\'IA Rouge a gagné...',
-    'L\'IA Violette a gagné...'
-  ];
-  
-  const el = document.getElementById('result-title');
-  el.textContent = titles[winner] || '— FIN —';
-  el.className = `result-title ${winner === 0 ? 'win' : 'lose'}`;
-  document.getElementById('result-sub').textContent = subs[winner] || '';
-  
-  const stats = document.getElementById('result-stats');
-  stats.innerHTML = `
-    <div class="result-row"><span>Gagnant</span><span class="val">${PLAYER_NAMES[winner]}</span></div>
-    <div class="result-row"><span>Tours joués</span><span class="val">${G.turnCount}</span></div>
-    <div class="result-row"><span>Murs posés</span><span class="val">${5 - G.walls_remaining[0]}</span></div>
-    <div class="result-row"><span>Murs restants</span><span class="val">${G.walls_remaining[0]}</span></div>
+function showResult(winner){
+  const titles=['🏆 VICTOIRE !','💀 DÉFAITE','💀 DÉFAITE'];
+  const subs=['Vous avez atteint votre objectif !','L\'IA Rouge a gagné...','L\'IA Violette a gagné...'];
+  const el=document.getElementById('rtitle');
+  el.textContent=titles[winner]||'FIN';
+  el.className='rtitle '+(winner===0?'win':'lose');
+  document.getElementById('rsub').textContent=subs[winner]||'';
+  const st=document.getElementById('rstats');
+  st.innerHTML=`
+    <div class="rrow"><span>Gagnant</span><span class="rv">${PNAMES[winner]}</span></div>
+    <div class="rrow"><span>Tours joués</span><span class="rv">${G.turnCount}</span></div>
+    <div class="rrow"><span>Murs posés (vous)</span><span class="rv">${PWALLS_START-G.wr[0]}</span></div>
+    <div class="rrow"><span>Murs restants (vous)</span><span class="rv">${G.wr[0]}</span></div>
   `;
   showScreen('screen-result');
 }
 
-function startGame() {
+function startGame(){
   setupCanvas();
   initGame();
   showScreen('screen-game');
 }
 
-// Init
+// Boot
 setupCanvas();
-buildCells(); // for title screen reference
+buildCells();
+buildAdj();
 </script>
 </body>
 </html>
