@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QUORIDOR : RIFT WALKERS — 3 JOUEURS</title>
+<title>QUORIDOR : RIFT WALKERS — HEXAGONE</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
 :root {
@@ -15,11 +15,11 @@
 body{background:var(--bg);color:var(--text);font-family:'Press Start 2P',monospace;font-size:8px;
   min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
   pointer-events:none;z-index:9999;}
 .screen{display:none;width:100%;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;}
 .screen.active{display:flex;}
-#screen-title{background:radial-gradient(ellipse at 50% 30%,#1a1038 0%,#0a0c12 70%);gap:16px;}
+#screen-title{background:radial-gradient(ellipse at 50% 30%,#1a1038 0%,#0a0c12 70%);gap:14px;}
 .logo h1{font-size:20px;color:var(--p0);text-shadow:0 0 20px var(--p0),0 0 40px #5de4c755;letter-spacing:4px;text-align:center;}
 .logo h2{font-size:9px;color:var(--text2);margin-top:6px;letter-spacing:8px;text-align:center;}
 .logo .sub{font-family:'VT323',monospace;font-size:18px;color:var(--gold);margin-top:10px;text-align:center;}
@@ -47,7 +47,6 @@ body::before{content:'';position:fixed;inset:0;
 .wpip.c2{background:var(--p2);border-color:var(--p2);}
 .wpip.used{background:var(--border);border-color:var(--border);}
 .pcard{border:2px solid var(--border);padding:8px;background:var(--panel);margin-bottom:5px;transition:all .2s;}
-.pcard.act{box-shadow:0 0 14px;}
 .pcard.act.c0{border-color:var(--p0);box-shadow:0 0 14px var(--p0g);}
 .pcard.act.c1{border-color:var(--p1);box-shadow:0 0 14px var(--p1g);}
 .pcard.act.c2{border-color:var(--p2);box-shadow:0 0 14px var(--p2g);}
@@ -61,7 +60,7 @@ body::before{content:'';position:fixed;inset:0;
 .tbar.t1{border-color:var(--p1);color:var(--p1);background:#ff6b6b10;box-shadow:0 0 10px var(--p1g);}
 .tbar.t2{border-color:var(--p2);color:var(--p2);background:#c97de810;box-shadow:0 0 10px var(--p2g);}
 .tbar.thinking{border-color:var(--gold);color:var(--gold);background:#f7c94810;}
-.mrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.mrow{display:flex;flex-direction:column;gap:5px;}
 .mbtn{font-family:'Press Start 2P',monospace;font-size:6px;padding:7px 10px;
   border:2px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .1s;}
 .mbtn:hover{border-color:var(--text2);color:var(--text);}
@@ -104,7 +103,7 @@ hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
     <button class="btn btn-p" onclick="startGame()">▶ JOUER</button>
     <button class="btn btn-sm" style="border-color:var(--text2);color:var(--text2)" onclick="showScreen('screen-howto')">? RÈGLES</button>
   </div>
-  <div style="margin-top:20px;font-family:'VT323',monospace;font-size:15px;color:var(--text2);text-align:center;line-height:2">
+  <div style="margin-top:18px;font-family:'VT323',monospace;font-size:15px;color:var(--text2);text-align:center;line-height:2">
     <span style="color:var(--p0)">■</span> VOUS (Cyan) &nbsp;<span style="color:var(--p1)">■</span> IA Rouge &nbsp;<span style="color:var(--p2)">■</span> IA Violette<br>
     <span style="color:var(--gold)">Rejoignez votre côté opposé !</span>
   </div>
@@ -116,25 +115,25 @@ hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
   <div class="pbox" style="width:100%">
     <h4>PLATEAU</h4>
     <div style="font-family:'VT323',monospace;font-size:15px;line-height:1.9;color:var(--text2)">
-      <div>Hexagone plat composé de <span style="color:var(--p0)">42 triangles</span>.</div>
-      <div>Les pions bougent de triangle en triangle via les arêtes partagées.</div>
-      <div>Si deux pions se font face, on peut sauter par-dessus.</div>
+      Hexagone composé de <span style="color:var(--p0)">42 triangles</span>.<br>
+      Les pions se déplacent de triangle en triangle (arête partagée).<br>
+      Si face à face, on peut sauter par-dessus l'adversaire.
     </div>
   </div>
   <div class="pbox" style="width:100%">
     <h4>À CHAQUE TOUR</h4>
     <div style="font-family:'VT323',monospace;font-size:15px;line-height:1.9;color:var(--text2)">
-      <div>Choisissez : <span style="color:var(--p0)">déplacer</span> votre pion OU <span style="color:var(--gold)">poser un mur</span>.</div>
-      <div>Un mur bloque une arête entre 2 triangles adjacents.</div>
-      <div>Interdit d'enfermer totalement un joueur (BFS).</div>
+      Choisissez : <span style="color:var(--p0)">déplacer</span> votre pion OU <span style="color:var(--gold)">poser un mur</span>.<br>
+      Un mur bloque l'arête entre 2 triangles adjacents.<br>
+      Interdit d'enfermer totalement un joueur.
     </div>
   </div>
   <div class="pbox" style="width:100%">
     <h4>OBJECTIFS</h4>
     <div style="font-family:'VT323',monospace;font-size:15px;color:var(--text2);line-height:1.9">
-      <div><span style="color:var(--p0)">VOUS (▽ bas-centre)</span> → rangée du haut</div>
-      <div><span style="color:var(--p1)">IA ROUGE (▲ haut-droit)</span> → côté bas-gauche</div>
-      <div><span style="color:var(--p2)">IA VIOLETTE (▲ haut-gauche)</span> → côté bas-droit</div>
+      <span style="color:var(--p0)">VOUS (bas-centre)</span> → rangée du haut (côté opposé)<br>
+      <span style="color:var(--p1)">IA ROUGE (haut-droit)</span> → côté bas-gauche<br>
+      <span style="color:var(--p2)">IA VIOLETTE (haut-gauche)</span> → côté bas-droit
     </div>
   </div>
   <button class="btn btn-p btn-sm" onclick="showScreen('screen-title')">← RETOUR</button>
@@ -149,7 +148,7 @@ hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
     </div>
     <div class="pbox">
       <h4>MODE</h4>
-      <div style="display:flex;flex-direction:column;gap:5px">
+      <div class="mrow">
         <button class="mbtn am" id="bm" onclick="setMode('move')">🦶 DÉPLACER</button>
         <button class="mbtn" id="bw" onclick="setMode('wall')">🧱 POSER MUR</button>
       </div>
@@ -160,9 +159,7 @@ hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
   <div class="gcenter">
     <div id="tbar" class="tbar t0">▶ VOTRE TOUR</div>
     <div class="boardwrap"><canvas id="bc"></canvas></div>
-    <div class="logbox" id="logbox" style="max-width:560px;width:100%">
-      <div class="le ls">★ Nouvelle partie — Bonne chance !</div>
-    </div>
+    <div class="logbox" id="logbox" style="max-width:560px;width:100%"></div>
   </div>
 
   <div class="side">
@@ -173,16 +170,16 @@ hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
         <div><span style="color:var(--p1)">◆</span> IA Rouge</div>
         <div><span style="color:var(--p2)">◆</span> IA Violette</div>
         <hr class="px">
-        <div><span style="color:#5de4c755">▓</span> Case atteignable</div>
-        <div><span style="color:#ffffff33">▓</span> Zone cible</div>
-        <div><span style="color:var(--gold)">—</span> Mur</div>
+        <div><span style="color:#5de4c766">▓</span> Case jouable</div>
+        <div><span style="color:var(--gold)">—</span> Mur posé</div>
+        <div><span style="color:#ffffff22">▓</span> Zone cible</div>
       </div>
     </div>
     <div class="pbox">
       <h4>TOUR</h4>
       <div id="tcount" style="font-family:'VT323',monospace;font-size:15px;color:var(--text2)">Tour 1</div>
       <hr class="px">
-      <div id="infobox" style="font-family:'VT323',monospace;font-size:13px;color:var(--text2);margin-top:4px;line-height:1.7">
+      <div id="infobox" style="font-family:'VT323',monospace;font-size:12px;color:var(--text2);margin-top:4px;line-height:1.7">
         Cliquez sur une case surlignée pour vous déplacer.
       </div>
     </div>
@@ -202,73 +199,92 @@ hr.px{border:none;border-top:2px solid var(--border);margin:5px 0;}
 
 <script>
 // ============================================================
-// BOARD GEOMETRY: flat-top hexagon, n=3 triangles per side
-// 6 rows, sizes: [5,7,9,9,7,5] = 42 triangles total
+// GEOMETRY: flat-top hexagon, n=3 triangles per edge
+// 6 rows, sizes [5,7,9,9,7,5] = 42 triangles
+// Half-slot offsets: [3,2,1,1,2,3]  (derived from hex vertices at (n,0),(3n,0),(4n,n),(3n,2n),(n,2n),(0,n))
 // isDown(r,c) = (c + Math.floor(r/3)) % 2 === 0
 // ============================================================
-const ROWS = [5,7,9,9,7,5];
+const N = 3;                         // triangles per hex side
+const ROWS = [5,7,9,9,7,5];         // triangles per row
 const NROWS = 6;
-const MAX_SIZE = 9;
-const TW = 58;  // triangle base width (px)
-const TH = Math.round(TW * Math.sqrt(3)/2); // height
-const PAD = 24;
+const TW = 60;                       // triangle base width (pixels)
+const TH = Math.round(TW * Math.sqrt(3)/2); // triangle height
+const PAD = 20;                      // canvas padding
 
-const offsets = ROWS.map(s => (MAX_SIZE - s) / 2);
+// Correct offset in half-slots from left canvas edge (excluding PAD)
+function rowOffset(r){ return N - Math.min(r, 2*N-1-r); }
+// = [3,2,1,1,2,3]
 
 function isDown(r,c){ return (c + Math.floor(r/3)) % 2 === 0; }
 
-// Build cells
-let cells = []; // {id, r, c, isDown, verts:[{x,y}x3], cx, cy}
-let cellIndex = {}; // "r,c" -> id
+// Triangle pixel vertices
+// Each half-slot = TW/2 pixels
+// Triangle (r,c): occupies half-slots [off+c, off+c+2]
+// Left vertex:  x = PAD + (off+c)   * TW/2,  y = PAD + r*TH
+// Right vertex: x = PAD + (off+c+2) * TW/2,  y = PAD + r*TH
+// Apex:         x = PAD + (off+c+1) * TW/2,  y = PAD + (r + (isDown?1:0))*TH
+function triVerts(r,c){
+  const off = rowOffset(r);
+  const xL = PAD + (off+c)   * (TW/2);
+  const xR = PAD + (off+c+2) * (TW/2);
+  const xM = PAD + (off+c+1) * (TW/2);
+  const yT = PAD + r*TH;
+  const yB = PAD + (r+1)*TH;
+  return isDown(r,c)
+    ? [{x:xL,y:yT},{x:xR,y:yT},{x:xM,y:yB}]   // ▽
+    : [{x:xM,y:yT},{x:xL,y:yB},{x:xR,y:yB}];   // ▲
+}
+
+// Canvas size: hex spans half-slots 0..(4N), rows 0..2N
+const CW = PAD*2 + (4*N+1)*(TW/2) + TW/2;  // a bit extra
+const CH = PAD*2 + 2*N*TH;
+
+// ============================================================
+// CELL INDEX
+// ============================================================
+let cells = [];     // {id,r,c,down,verts,cx,cy}
+let cellLookup = {};// "r,c" -> id
+let adjList = [];   // adjList[id] = Set<id>
+const NCELLS = ROWS.reduce((a,b)=>a+b,0); // 42
 
 function buildCells(){
-  cells = []; cellIndex = {};
-  let id = 0;
+  cells=[]; cellLookup={}; adjList=[];
+  let id=0;
   for(let r=0;r<NROWS;r++){
     for(let c=0;c<ROWS[r];c++){
-      const off = offsets[r];
-      const xL = PAD + (off+c)*(TW/2);
-      const xR = xL + TW;
-      const xM = xL + TW/2;
-      const yT = PAD + r*TH;
-      const yB = yT + TH;
-      const down = isDown(r,c);
-      const verts = down
-        ? [{x:xL,y:yT},{x:xR,y:yT},{x:xM,y:yB}]   // ▽ base top, apex bottom
-        : [{x:xM,y:yT},{x:xL,y:yB},{x:xR,y:yB}];   // ▲ apex top, base bottom
-      const cx=(verts[0].x+verts[1].x+verts[2].x)/3;
-      const cy=(verts[0].y+verts[1].y+verts[2].y)/3;
-      cells.push({id,r,c,isDown:down,verts,cx,cy});
-      cellIndex[r+','+c]=id;
+      const v=triVerts(r,c);
+      const cx=(v[0].x+v[1].x+v[2].x)/3;
+      const cy=(v[0].y+v[1].y+v[2].y)/3;
+      cells.push({id,r,c,down:isDown(r,c),verts:v,cx,cy});
+      cellLookup[r+','+c]=id;
+      adjList.push(new Set());
       id++;
     }
   }
+  buildAdj();
 }
 
 function cid(r,c){
   if(r<0||r>=NROWS||c<0||c>=ROWS[r]) return -1;
-  return cellIndex[r+','+c]??-1;
+  return cellLookup[r+','+c]??-1;
 }
 
-// Build adjacency
-let adj = []; // adj[id] = Set of ids
-
 function buildAdj(){
-  adj = cells.map(()=>new Set());
   for(let r=0;r<NROWS;r++){
     for(let c=0;c<ROWS[r];c++){
       const id=cid(r,c);
-      // Same-row right
+      // Same-row right neighbour
       if(c+1<ROWS[r]){
         const n=cid(r,c+1);
-        adj[id].add(n); adj[n].add(id);
+        adjList[id].add(n); adjList[n].add(id);
       }
-      // Inter-row: ▲ connects DOWN to ▽ below
+      // ▲ connects DOWN to ▽ in row below
+      // Using half-slot formula: c_below = c + offset[r] - offset[r+1]
       if(!isDown(r,c) && r+1<NROWS){
-        const cb = c + offsets[r] - offsets[r+1];
+        const cb = c + rowOffset(r) - rowOffset(r+1);
         if(cb>=0 && cb<ROWS[r+1] && isDown(r+1,cb)){
           const n=cid(r+1,cb);
-          adj[id].add(n); adj[n].add(id);
+          adjList[id].add(n); adjList[n].add(id);
         }
       }
     }
@@ -276,130 +292,134 @@ function buildAdj(){
 }
 
 // ============================================================
-// WALLS: set of blocked edges {a,b} (unordered pair of cell ids)
+// WALLS
 // ============================================================
-let walls = new Set(); // "min,max" keys
+let wallSet = new Set();  // "min,max" keys
+let wallOwner = {};       // key -> owner id
 
-function wallKey(a,b){ return Math.min(a,b)+','+Math.max(a,b); }
-function hasWall(a,b){ return walls.has(wallKey(a,b)); }
+function wkey(a,b){ return Math.min(a,b)+','+Math.max(a,b); }
+function hasWall(a,b){ return wallSet.has(wkey(a,b)); }
 
-function addWall(a,b,owner){
-  walls.add(wallKey(a,b));
-  wallData[wallKey(a,b)]={a,b,owner};
+function placeWall(a,b,owner){
+  const k=wkey(a,b);
+  wallSet.add(k);
+  wallOwner[k]=owner;
 }
-
-let wallData = {}; // key -> {a,b,owner}
 
 // ============================================================
 // BFS
 // ============================================================
-function bfs(startId, goalSet, blockedPos=[]){
-  const blocked = new Set(blockedPos);
-  const visited = new Set([startId]);
-  const queue = [{id:startId,dist:0,path:[startId]}];
+function bfs(startId, goalSet, avoidIds=[]){
+  const avoid=new Set(avoidIds);
+  if(goalSet.has(startId)) return {dist:0,path:[startId]};
+  const visited=new Set([startId]);
+  const queue=[{id:startId,dist:0,path:[startId]}];
   while(queue.length){
     const {id,dist,path}=queue.shift();
-    if(goalSet.has(id)) return {dist,path};
-    for(const nid of adj[id]){
-      if(blocked.has(nid)) continue;
-      if(hasWall(id,nid)) continue;
-      if(visited.has(nid)) continue;
+    for(const nid of adjList[id]){
+      if(avoid.has(nid)||hasWall(id,nid)||visited.has(nid)) continue;
       visited.add(nid);
-      queue.push({id:nid,dist:dist+1,path:[...path,nid]});
+      const np=[...path,nid];
+      if(goalSet.has(nid)) return {dist:dist+1,path:np};
+      queue.push({id:nid,dist:dist+1,path:np});
     }
   }
   return null;
 }
 
-function canReachGoal(pid, testA, testB){
-  const origWalls = new Set(walls);
-  const origData = {...wallData};
-  if(testA!==undefined){ walls.add(wallKey(testA,testB)); }
-  let ok = true;
+// Check if adding wall (a,b) traps anyone
+function wallIsLegal(a,b){
+  if(hasWall(a,b)) return false;
+  placeWall(a,b,-1);
+  let ok=true;
   for(let p=0;p<3;p++){
     if(G.elim[p]) continue;
     if(!bfs(G.pos[p], GOALS[p])){ ok=false; break; }
   }
-  walls = origWalls;
-  wallData = origData;
+  // Remove test wall
+  wallSet.delete(wkey(a,b));
+  delete wallOwner[wkey(a,b)];
   return ok;
 }
 
 // ============================================================
-// GOAL ZONES & STARTS
+// GOALS & STARTS
 // ============================================================
-// P0 (Cyan): start = middle of bottom row (5,2), goal = row 0 (all cells)
-// P1 (Red):  start = middle of top-right side (1,6), goal = bottom-left side
-// P2 (Violet): start = middle of top-left side (1,0), goal = bottom-right side
+// Goal identification: cells touching a specific hex boundary.
+// Hex has 6 sides. We assign opposite-side pairs to each player.
+// P0: starts bottom-centre → goal = top side (row 0, all 5 cells)
+// P1: starts top-right → goal = bottom-left side
+// P2: starts top-left → goal = bottom-right side
+//
+// Sides:
+// Top:         row 0, all cells (▽ with base on top hex edge)
+// Bottom:      row 5, all cells (▲ with base on bottom hex edge)
+// Top-right:   rightmost cells of rows 0,1,2 = (0,4),(1,6),(2,8)
+// Bottom-left: leftmost cells of rows 3,4,5 = (3,0),(4,0),(5,0)
+// Top-left:    leftmost of rows 0,1,2 = (0,0),(1,0),(2,0)
+// Bottom-right:rightmost of rows 3,4,5 = (3,8),(4,6),(5,4)
 
 let GOALS;
 function buildGoals(){
-  GOALS = [
-    new Set(Array.from({length:ROWS[0]},(_,c)=>cid(0,c))),   // P0 -> top row
-    new Set([cid(3,0),cid(4,0),cid(5,0)]),                    // P1 -> bottom-left
-    new Set([cid(3,8),cid(4,6),cid(5,4)]),                    // P2 -> bottom-right
+  GOALS=[
+    // P0: all of top row (row 0)
+    new Set(Array.from({length:ROWS[0]},(_,c)=>cid(0,c))),
+    // P1: bottom-left side
+    new Set([cid(3,0),cid(4,0),cid(5,0)]),
+    // P2: bottom-right side
+    new Set([cid(3,8),cid(4,6),cid(5,4)]),
   ];
 }
 
-function startPos(){
-  return [cid(5,2), cid(1,6), cid(1,0)];
-}
+// "Middle" start on each of the 3 starting sides:
+// P0: middle of bottom row = (5, 2)  (c=2 is the middle of 5 cells)
+// P1: middle of top-right side = (1, 6) (middle of 3 cells)
+// P2: middle of top-left side = (1, 0)
+function startPositions(){ return [cid(5,2), cid(1,6), cid(1,0)]; }
 
 // ============================================================
 // GAME STATE
 // ============================================================
-const PNAMES = ['VOUS','IA ROUGE','IA VIOLETTE'];
-const PCSS   = ['c0','c1','c2'];
-const PLCSS  = ['l0','l1','l2'];
-const PCOLS  = ['#5de4c7','#ff6b6b','#c97de8'];
-const PWALLS_START = 7;
+const PNAMES=['VOUS','IA ROUGE','IA VIOLETTE'];
+const PCSS  =['c0','c1','c2'];
+const PLCSS =['l0','l1','l2'];
+const PCOLS =['#5de4c7','#ff6b6b','#c97de8'];
+const PWMAX  = 7;
 
-let G = {};
+let G={};
 
 function initGame(){
   buildCells();
-  buildAdj();
   buildGoals();
-  walls = new Set();
-  wallData = {};
-
-  G = {
-    turn: 0,
-    turnCount: 0,
-    pos: startPos(),
-    wr: [PWALLS_START, PWALLS_START, PWALLS_START], // walls remaining
-    elim: [false,false,false],
-    mode: 'move',
-    hover: -1,
-    hoverEdge: null,
-    gameOver: false,
-    winner: -1,
+  wallSet=new Set(); wallOwner={};
+  G={
+    turn:0, turnCount:0,
+    pos:startPositions(),
+    wr:[PWMAX,PWMAX,PWMAX],
+    elim:[false,false,false],
+    mode:'move',
+    hoverCell:-1, hoverEdge:null,
+    gameOver:false, winner:-1,
   };
-
-  renderAll();
-  buildPCards();
-  updateTBar();
   clearLog();
   addLog('★ Nouvelle partie !','s');
-  addLog('P0→haut | IA1→bas-gauche | IA2→bas-droite','s');
-  setMode('move');
+  addLog('Vous→haut | IA1→bas-gauche | IA2→bas-droit','s');
+  renderAll(); buildPCards(); updateTBar(); setMode('move');
 }
 
 // ============================================================
 // VALID MOVES
 // ============================================================
 function validMoves(pid){
-  const pos = G.pos[pid];
-  const others = G.pos.filter((_,i)=>i!==pid && !G.elim[i]);
-  const moves = [];
-  for(const nid of adj[pos]){
+  const pos=G.pos[pid];
+  const others=G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
+  const moves=[];
+  for(const nid of adjList[pos]){
     if(hasWall(pos,nid)) continue;
     if(others.includes(nid)){
       // Jump over
-      for(const jid of adj[nid]){
-        if(jid===pos) continue;
-        if(hasWall(nid,jid)) continue;
-        if(others.includes(jid)) continue;
+      for(const jid of adjList[nid]){
+        if(jid===pos||hasWall(nid,jid)||others.includes(jid)) continue;
         if(!moves.includes(jid)) moves.push(jid);
       }
     } else {
@@ -412,23 +432,22 @@ function validMoves(pid){
 // ============================================================
 // ACTIONS
 // ============================================================
-function doMove(pid, targetId){
-  G.pos[pid] = targetId;
-  const cell = cells[targetId];
-  addLog(`${PNAMES[pid]} → (${cell.r},${cell.c})`, PLCSS[pid]);
+function doMove(pid,targetId){
+  G.pos[pid]=targetId;
+  const cl=cells[targetId];
+  addLog(`${PNAMES[pid]} → (${cl.r},${cl.c})`,PLCSS[pid]);
   renderAll(); buildPCards();
   if(checkWin(pid)) return;
   nextTurn();
 }
 
-function doWall(pid, a, b){
+function doWall(pid,a,b){
   if(G.wr[pid]<=0){ notify('Plus de murs !'); return; }
   if(hasWall(a,b)){ notify('Mur déjà là !'); return; }
-  // Legality check
-  if(!canReachGoal(-1,a,b)){ notify('Illégal : chemin bloqué !'); return; }
-  addWall(a,b,pid);
+  if(!wallIsLegal(a,b)){ notify('Illégal : chemin bloqué !'); return; }
+  placeWall(a,b,pid);
   G.wr[pid]--;
-  addLog(`${PNAMES[pid]} pose un mur`, PLCSS[pid]);
+  addLog(`${PNAMES[pid]} pose un mur`,PLCSS[pid]);
   renderAll(); buildPCards();
   nextTurn();
 }
@@ -447,73 +466,158 @@ function checkWin(pid){
 function nextTurn(){
   G.turn=(G.turn+1)%3;
   G.turnCount++;
-  let safety=0;
-  while(G.elim[G.turn]&&safety<3){ G.turn=(G.turn+1)%3; safety++; }
-  buildPCards(); updateTBar();
-  setMode('move');
-  if(G.turn!==0 && !G.gameOver){
+  let s=0;
+  while(G.elim[G.turn]&&s<3){ G.turn=(G.turn+1)%3; s++; }
+  // Check if only 1 player left
+  const alive=G.elim.filter(e=>!e).length;
+  if(alive<=1){
+    const w=G.elim.findIndex(e=>!e);
+    G.gameOver=true; G.winner=w;
+    setTimeout(()=>showResult(w),600);
+    return;
+  }
+  buildPCards(); updateTBar(); setMode('move');
+  if(G.turn!==0&&!G.gameOver){
     updateTBar(true);
-    setTimeout(()=>aiPlay(G.turn), 650+Math.random()*350);
+    setTimeout(()=>aiPlay(G.turn), 700+Math.random()*300);
   }
 }
 
 // ============================================================
-// AI
+// AI — SMARTER VERSION
+// Uses: 1) BFS to find own shortest path, 2) evaluates wall placements
+// by their impact on human's path, 3) never gets stuck in loops.
 // ============================================================
+
+// Score a board state for a player: lower is better (shorter path to goal)
+function pathDist(pid, extraWallA, extraWallB){
+  if(extraWallA!==undefined){ placeWall(extraWallA,extraWallB,-1); }
+  const others=G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
+  const res=bfs(G.pos[pid],GOALS[pid],others);
+  if(extraWallA!==undefined){ wallSet.delete(wkey(extraWallA,extraWallB)); delete wallOwner[wkey(extraWallA,extraWallB)]; }
+  return res ? res.dist : 9999;
+}
+
 function aiPlay(pid){
   if(G.gameOver||G.elim[pid]){ nextTurn(); return; }
-  const goals = GOALS[pid];
-  const others = G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
-  const myPath = bfs(G.pos[pid], goals, others);
+
+  const myGoals=GOALS[pid];
+  const others=G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
+
+  // Current shortest path (ignoring other player positions as obstacles for planning)
+  const myPath=bfs(G.pos[pid], myGoals, others);
+  const myDist=myPath ? myPath.dist : 9999;
+
+  // Human path
+  const humanPath=bfs(G.pos[0], GOALS[0]);
+  const humanDist=humanPath ? humanPath.dist : 9999;
+
+  // Should we consider placing a wall?
+  // Wall is useful if: we have walls left AND we're not too far behind AND human is making progress
+  const wallThink = G.wr[pid]>0 && myDist<=humanDist+4 && humanDist>0;
+  
+  let bestWallScore=-Infinity;
+  let bestWall=null;
+
+  if(wallThink && humanPath && humanPath.path.length>=2){
+    // Evaluate walls that block the leading threat (human, or another AI if ahead)
+    // Determine who's closest to winning
+    const dists=G.pos.map((_,p)=>G.elim[p]?9999:(bfs(G.pos[p],GOALS[p])||{dist:9999}).dist);
+    const minDist=Math.min(...dists.filter((_,p)=>p!==pid&&!G.elim[p]));
+    const targetPid=dists.findIndex((d,p)=>p!==pid&&!G.elim[p]&&d===minDist);
+    
+    const targetPath=bfs(G.pos[targetPid], GOALS[targetPid]);
+    if(targetPath && targetPath.path.length>=2){
+      // Try blocking each edge along target's path
+      for(let i=0;i<Math.min(5,targetPath.path.length-1);i++){
+        const a=targetPath.path[i], b=targetPath.path[i+1];
+        if(hasWall(a,b)) continue;
+        if(!wallIsLegal(a,b)) continue;
+        
+        // Score: increase in target's path - decrease in my path
+        placeWall(a,b,-1);
+        const newTargetPath=bfs(G.pos[targetPid], GOALS[targetPid]);
+        const newMyPath=bfs(G.pos[pid], myGoals, others);
+        wallSet.delete(wkey(a,b)); delete wallOwner[wkey(a,b)];
+        
+        const targetGain=(newTargetPath ? newTargetPath.dist : 9999) - minDist;
+        const myCost=(newMyPath ? newMyPath.dist : 9999) - myDist;
+        const score = targetGain * 2 - myCost; // weighted: blocking opponent is more valuable
+        
+        if(score>bestWallScore){ bestWallScore=score; bestWall={a,b}; }
+      }
+    }
+  }
 
   // Decide: wall or move?
-  const shouldWall = G.wr[pid]>0 && Math.random()<0.35;
-  let placed = false;
+  // Place wall if it genuinely helps (score > 0) AND some randomness for unpredictability
+  const doWallAction = bestWall && bestWallScore>0 && Math.random()<0.55;
 
-  if(shouldWall){
-    // Find human's shortest path and try to block one edge
-    const humanPath = bfs(G.pos[0], GOALS[0], G.pos.filter((_,i)=>i>0&&!G.elim[i]));
-    if(humanPath && humanPath.path.length>=2 && !G.elim[0]){
-      for(let i=0;i<Math.min(4,humanPath.path.length-1);i++){
-        const a=humanPath.path[i], b=humanPath.path[i+1];
-        if(!hasWall(a,b) && canReachGoal(-1,a,b)){
-          addWall(a,b,pid);
-          G.wr[pid]--;
-          addLog(`${PNAMES[pid]} pose un mur`, PLCSS[pid]);
-          renderAll(); buildPCards();
-          placed=true;
-          break;
+  if(doWallAction){
+    placeWall(bestWall.a, bestWall.b, pid);
+    G.wr[pid]--;
+    addLog(`${PNAMES[pid]} pose un mur stratégique`,PLCSS[pid]);
+    renderAll(); buildPCards();
+    if(!G.gameOver) nextTurn();
+    return;
+  }
+
+  // MOVE: follow own shortest path
+  // Recalculate ignoring other pawns as obstacles (they can be jumped)
+  const movePath=bfs(G.pos[pid], myGoals);
+  if(movePath && movePath.path.length>=2){
+    let nextId=movePath.path[1];
+    
+    // If next cell is occupied, use validMoves to handle jump
+    const occupied=G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
+    if(occupied.includes(nextId)){
+      const vm=validMoves(pid);
+      if(vm.length>0){
+        // Pick the valid move that minimises distance to goal
+        let bestMove=-1, bestMoveDist=9999;
+        for(const mid of vm){
+          placeWall(-1,-1); // no-op, just using bfs
+          const tmp=G.pos[pid]; G.pos[pid]=mid;
+          const d=(bfs(mid, myGoals)||{dist:9999}).dist;
+          G.pos[pid]=tmp;
+          if(d<bestMoveDist){ bestMoveDist=d; bestMove=mid; }
         }
+        nextId=bestMove>=0?bestMove:vm[0];
+      } else {
+        nextTurn(); return;
       }
     }
+    
+    doMove(pid,nextId);
+    return;
   }
 
-  if(!placed){
-    if(myPath && myPath.path.length>=2){
-      let nextId = myPath.path[1];
-      const allOthers = G.pos.filter((_,i)=>i!==pid&&!G.elim[i]);
-      if(allOthers.includes(nextId)){
-        const vm = validMoves(pid);
-        nextId = vm.length>0 ? vm[0] : -1;
-      }
-      if(nextId>=0){ doMove(pid,nextId); return; }
+  // No path found: try valid moves (shouldn't normally happen)
+  const vm=validMoves(pid);
+  if(vm.length>0){
+    // Pick move that minimises distance
+    let bestMove=vm[0], bestMoveDist=9999;
+    for(const mid of vm){
+      const tmp=G.pos[pid]; G.pos[pid]=mid;
+      const d=(bfs(mid,myGoals)||{dist:9999}).dist;
+      G.pos[pid]=tmp;
+      if(d<bestMoveDist){ bestMoveDist=d; bestMove=mid; }
     }
-    const vm = validMoves(pid);
-    if(vm.length>0){ doMove(pid,vm[0]); return; }
+    doMove(pid,bestMove);
+  } else {
+    nextTurn();
   }
-
-  if(!G.gameOver) nextTurn();
 }
 
 // ============================================================
-// RENDERING
+// DRAWING
 // ============================================================
-const canvas = document.getElementById('bc');
-const ctx    = canvas.getContext('2d');
+const canvas=document.getElementById('bc');
+const ctx=canvas.getContext('2d');
 
 function setupCanvas(){
-  canvas.width  = PAD*2 + MAX_SIZE*(TW/2) + TW/2;
-  canvas.height = PAD*2 + NROWS*TH;
+  canvas.width  = PAD*2 + (4*N+2)*(TW/2);
+  canvas.height = PAD*2 + 2*N*TH + 2;
 }
 
 function renderAll(){
@@ -521,123 +625,141 @@ function renderAll(){
   ctx.fillStyle='#111520';
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // Draw all cells
+  // Draw hex outline (clipping region for aesthetic)
+  drawHexBg();
+
+  // All cells
   cells.forEach(cell=>drawCell(cell));
 
-  // Valid move highlights (player's turn)
+  // Goal overlays
+  const gfill=['#5de4c712','#ff6b6b12','#c97de812'];
+  const gstroke=['#5de4c744','#ff6b6b44','#c97de844'];
+  for(let p=0;p<3;p++){
+    if(!G.elim[p]) for(const id of GOALS[p]) drawCellHL(cells[id],gfill[p],gstroke[p]);
+  }
+
+  // Valid move highlights
   if(!G.gameOver && G.turn===0 && G.mode==='move'){
-    validMoves(0).forEach(id=>drawCellHL(cells[id],'#5de4c730','#5de4c7aa'));
+    validMoves(0).forEach(id=>drawCellHL(cells[id],'#5de4c730','#5de4c7cc'));
   }
 
   // Wall hover
   if(G.turn===0 && G.mode==='wall' && G.hoverEdge){
-    drawEdgeHL(G.hoverEdge.a, G.hoverEdge.b, '#f7c94888', 5);
+    const {a,b}=G.hoverEdge;
+    drawEdgeHL(a,b,'#f7c94899',5);
   }
 
-  // Draw walls
-  for(const key of walls){
-    const w = wallData[key];
-    if(w) drawWall(w);
+  // Walls
+  for(const k of wallSet){
+    const [a,b]=k.split(',').map(Number);
+    const owner=wallOwner[k];
+    drawEdgeHL(a,b,PCOLS[owner],5,true);
   }
 
-  // Goal overlays
-  const goalCols = ['#5de4c712','#ff6b6b12','#c97de812'];
-  const goalBorder = ['#5de4c755','#ff6b6b55','#c97de855'];
-  for(let p=0;p<3;p++){
-    if(!G.elim[p]){
-      for(const id of GOALS[p]){
-        drawCellHL(cells[id], goalCols[p], goalBorder[p]);
-      }
-    }
-  }
-
-  // Pieces
+  // Pieces (back to front)
   for(let p=2;p>=0;p--){
-    if(!G.elim[p]) drawPiece(cells[G.pos[p]], p);
+    if(!G.elim[p]) drawPiece(cells[G.pos[p]],p);
   }
+
+  // Hex border on top
+  drawHexBorder();
+}
+
+function hexVertices(){
+  // In pixel coords: hex vertices at half-slots 0,n,3n,4n,3n,n and rows 0,0,0,n,2n,2n,n
+  const hs=TW/2;
+  const vertices=[
+    {x:PAD + N*hs,        y:PAD},
+    {x:PAD + 3*N*hs,      y:PAD},
+    {x:PAD + 4*N*hs,      y:PAD + N*TH},
+    {x:PAD + 3*N*hs,      y:PAD + 2*N*TH},
+    {x:PAD + N*hs,        y:PAD + 2*N*TH},
+    {x:PAD,               y:PAD + N*TH},
+  ];
+  return vertices;
+}
+
+function drawHexBg(){
+  const verts=hexVertices();
+  ctx.beginPath();
+  ctx.moveTo(verts[0].x,verts[0].y);
+  verts.slice(1).forEach(v=>ctx.lineTo(v.x,v.y));
+  ctx.closePath();
+  ctx.fillStyle='#0e121e';
+  ctx.fill();
+}
+
+function drawHexBorder(){
+  const verts=hexVertices();
+  ctx.beginPath();
+  ctx.moveTo(verts[0].x,verts[0].y);
+  verts.slice(1).forEach(v=>ctx.lineTo(v.x,v.y));
+  ctx.closePath();
+  ctx.strokeStyle='#3a4a7a';
+  ctx.lineWidth=3;
+  ctx.stroke();
 }
 
 function drawCell(cell){
-  const {verts,isDown:down} = cell;
+  const {verts,down}=cell;
   ctx.beginPath();
   ctx.moveTo(verts[0].x,verts[0].y);
   ctx.lineTo(verts[1].x,verts[1].y);
   ctx.lineTo(verts[2].x,verts[2].y);
   ctx.closePath();
-  ctx.fillStyle = down ? '#141824' : '#12161f';
+  ctx.fillStyle=down?'#141824':'#12161f';
   ctx.fill();
-  ctx.strokeStyle='#2a3350';
+  ctx.strokeStyle='#222840';
   ctx.lineWidth=1;
   ctx.stroke();
 }
 
-function drawCellHL(cell, fill, stroke){
+function drawCellHL(cell,fill,stroke){
   if(!cell) return;
-  const {verts}=cell;
   ctx.beginPath();
-  ctx.moveTo(verts[0].x,verts[0].y);
-  ctx.lineTo(verts[1].x,verts[1].y);
-  ctx.lineTo(verts[2].x,verts[2].y);
+  ctx.moveTo(cell.verts[0].x,cell.verts[0].y);
+  ctx.lineTo(cell.verts[1].x,cell.verts[1].y);
+  ctx.lineTo(cell.verts[2].x,cell.verts[2].y);
   ctx.closePath();
   ctx.fillStyle=fill; ctx.fill();
   ctx.strokeStyle=stroke; ctx.lineWidth=1.5;
   ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
 }
 
-function drawPiece(cell, pid){
+function drawPiece(cell,pid){
   if(!cell) return;
-  const {cx,cy}=cell;
-  const col=PCOLS[pid];
-  const r=11;
-  // Glow
-  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r+8);
-  g.addColorStop(0,col+'55'); g.addColorStop(1,'transparent');
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,r+8,0,Math.PI*2); ctx.fill();
-  // Diamond
-  const s=10;
+  const {cx,cy}=cell; const col=PCOLS[pid]; const s=11;
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,s+8);
+  g.addColorStop(0,col+'66'); g.addColorStop(1,'transparent');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,s+8,0,Math.PI*2); ctx.fill();
   ctx.fillStyle=col;
   ctx.beginPath();
   ctx.moveTo(cx,cy-s); ctx.lineTo(cx+s,cy); ctx.lineTo(cx,cy+s); ctx.lineTo(cx-s,cy);
   ctx.closePath(); ctx.fill();
-  // Shine
   ctx.fillStyle='#ffffff44';
-  ctx.beginPath();
-  ctx.moveTo(cx,cy-s+3); ctx.lineTo(cx+3,cy-2); ctx.lineTo(cx,cy-5);
-  ctx.closePath(); ctx.fill();
-  // Label
-  ctx.fillStyle='#00000088'; ctx.font='bold 8px monospace';
+  ctx.beginPath(); ctx.moveTo(cx,cy-s+3); ctx.lineTo(cx+4,cy-1); ctx.lineTo(cx,cy-6); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#00000099'; ctx.font='bold 8px monospace';
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(pid===0?'V':pid===1?'1':'2',cx,cy+1);
-}
-
-function drawWall(w){
-  const edge=sharedEdge(cells[w.a],cells[w.b]);
-  if(!edge) return;
-  const wc=['#f7c948','#ff6b6b','#c97de8'][w.owner];
-  ctx.strokeStyle=wc; ctx.lineWidth=5;
-  ctx.shadowColor=wc; ctx.shadowBlur=6;
-  ctx.beginPath();
-  ctx.moveTo(edge[0].x,edge[0].y);
-  ctx.lineTo(edge[1].x,edge[1].y);
-  ctx.stroke(); ctx.shadowBlur=0;
-}
-
-function drawEdgeHL(a,b,col,lw){
-  const edge=sharedEdge(cells[a],cells[b]);
-  if(!edge) return;
-  ctx.strokeStyle=col; ctx.lineWidth=lw;
-  ctx.beginPath(); ctx.moveTo(edge[0].x,edge[0].y); ctx.lineTo(edge[1].x,edge[1].y); ctx.stroke();
 }
 
 function sharedEdge(ca,cb){
   if(!ca||!cb) return null;
   const shared=[];
-  for(const va of ca.verts){
-    for(const vb of cb.verts){
-      if(Math.abs(va.x-vb.x)<2 && Math.abs(va.y-vb.y)<2){ shared.push(va); break; }
-    }
-  }
-  return shared.length===2 ? shared : null;
+  for(const va of ca.verts) for(const vb of cb.verts)
+    if(Math.abs(va.x-vb.x)<2&&Math.abs(va.y-vb.y)<2){ shared.push(va); break; }
+  return shared.length===2?shared:null;
+}
+
+function drawEdgeHL(a,b,col,lw,glow=false){
+  const edge=sharedEdge(cells[a],cells[b]);
+  if(!edge) return;
+  if(glow){ ctx.shadowColor=col; ctx.shadowBlur=8; }
+  ctx.strokeStyle=col; ctx.lineWidth=lw;
+  ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(edge[0].x,edge[0].y); ctx.lineTo(edge[1].x,edge[1].y); ctx.stroke();
+  if(glow){ ctx.shadowBlur=0; }
+  ctx.lineCap='butt';
 }
 
 // ============================================================
@@ -652,51 +774,49 @@ function ptInTri(px,py,cell){
 }
 
 function getCellAt(mx,my){
-  for(const cell of cells){ if(ptInTri(mx,my,cell)) return cell.id; }
+  for(const cell of cells) if(ptInTri(mx,my,cell)) return cell.id;
   return -1;
 }
 
 function getNearestEdge(mx,my){
   let best=null, bd=Infinity;
   for(let i=0;i<cells.length;i++){
-    for(const nid of adj[i]){
+    for(const nid of adjList[i]){
       if(nid<=i) continue;
-      const edge=sharedEdge(cells[i],cells[nid]);
-      if(!edge) continue;
-      const ex=(edge[0].x+edge[1].x)/2, ey=(edge[0].y+edge[1].y)/2;
+      const e=sharedEdge(cells[i],cells[nid]);
+      if(!e) continue;
+      const ex=(e[0].x+e[1].x)/2, ey=(e[0].y+e[1].y)/2;
       const d=(mx-ex)**2+(my-ey)**2;
       if(d<bd){ bd=d; best={a:i,b:nid}; }
     }
   }
-  return bd<(TW*0.65)**2 ? best : null;
+  return bd<(TW*0.7)**2?best:null;
 }
 
-function getScale(){
+function getEventPos(e){
   const rect=canvas.getBoundingClientRect();
-  return {sx:canvas.width/rect.width, sy:canvas.height/rect.height};
+  const sx=canvas.width/rect.width, sy=canvas.height/rect.height;
+  const src=e.touches?e.touches[0]:e;
+  return {mx:(src.clientX-rect.left)*sx, my:(src.clientY-rect.top)*sy};
 }
 
 canvas.addEventListener('mousemove',e=>{
   if(G.turn!==0||G.gameOver) return;
-  const rect=canvas.getBoundingClientRect();
-  const {sx,sy}=getScale();
-  const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
-  if(G.mode==='move'){ G.hover=getCellAt(mx,my); G.hoverEdge=null; }
-  else { G.hoverEdge=getNearestEdge(mx,my); G.hover=-1; }
+  const{mx,my}=getEventPos(e);
+  if(G.mode==='move'){ G.hoverCell=getCellAt(mx,my); G.hoverEdge=null; }
+  else { G.hoverEdge=getNearestEdge(mx,my); G.hoverCell=-1; }
   renderAll();
 });
 
-canvas.addEventListener('mouseleave',()=>{ G.hover=-1; G.hoverEdge=null; renderAll(); });
+canvas.addEventListener('mouseleave',()=>{ G.hoverCell=-1; G.hoverEdge=null; renderAll(); });
 
 canvas.addEventListener('click',e=>{
   if(G.turn!==0||G.gameOver) return;
-  const rect=canvas.getBoundingClientRect();
-  const {sx,sy}=getScale();
-  const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
+  const{mx,my}=getEventPos(e);
   if(G.mode==='move'){
-    const cId=getCellAt(mx,my);
-    if(cId>=0){
-      if(validMoves(0).includes(cId)) doMove(0,cId);
+    const id=getCellAt(mx,my);
+    if(id>=0){
+      if(validMoves(0).includes(id)) doMove(0,id);
       else notify('Case non atteignable !');
     }
   } else {
@@ -706,20 +826,13 @@ canvas.addEventListener('click',e=>{
   }
 });
 
-// Touch support
 canvas.addEventListener('touchend',e=>{
   e.preventDefault();
   if(G.turn!==0||G.gameOver) return;
-  const rect=canvas.getBoundingClientRect();
-  const {sx,sy}=getScale();
-  const t=e.changedTouches[0];
-  const mx=(t.clientX-rect.left)*sx, my=(t.clientY-rect.top)*sy;
+  const{mx,my}=getEventPos(e);
   if(G.mode==='move'){
-    const cId=getCellAt(mx,my);
-    if(cId>=0){
-      if(validMoves(0).includes(cId)) doMove(0,cId);
-      else notify('Case non atteignable !');
-    }
+    const id=getCellAt(mx,my);
+    if(id>=0&&validMoves(0).includes(id)) doMove(0,id);
   } else {
     const edge=getNearestEdge(mx,my);
     if(edge) doWall(0,edge.a,edge.b);
@@ -727,41 +840,37 @@ canvas.addEventListener('touchend',e=>{
 },{passive:false});
 
 // ============================================================
-// UI
+// UI HELPERS
 // ============================================================
 function setMode(m){
   if(G.turn!==0&&m!=='move') return;
-  G.mode=m;
-  G.hoverEdge=null;
+  G.mode=m; G.hoverEdge=null;
   document.getElementById('bm').className='mbtn'+(m==='move'?' am':'');
   document.getElementById('bw').className='mbtn'+(m==='wall'?' aw':'');
-  renderAll();
   const ib=document.getElementById('infobox');
-  if(m==='move') ib.textContent='Cliquez sur une case surlignée.';
-  else ib.textContent='Survolez une arête entre deux cases puis cliquez.';
+  ib.textContent=m==='move'?'Cliquez sur une case cyan surlignée pour avancer.':'Survolez une arête entre 2 triangles, puis cliquez pour poser un mur.';
+  renderAll();
 }
 
 function updateTBar(thinking=false){
   const el=document.getElementById('tbar');
-  if(G.gameOver){ el.textContent='— FIN DE PARTIE —'; el.className='tbar thinking'; return; }
+  if(G.gameOver){ el.textContent='— FIN —'; el.className='tbar thinking'; return; }
   if(thinking||G.turn!==0){ el.textContent=`⟳ ${PNAMES[G.turn]} RÉFLÉCHIT...`; el.className='tbar thinking'; }
   else { el.textContent='▶ VOTRE TOUR'; el.className='tbar t0'; }
 }
 
 function buildPCards(){
-  const el=document.getElementById('pcards');
-  el.innerHTML='';
+  const el=document.getElementById('pcards'); el.innerHTML='';
   for(let p=0;p<3;p++){
     const isAct=G.turn===p&&!G.gameOver;
     const div=document.createElement('div');
-    div.className=`pcard ${PCSS[p]} ${isAct?'act':''} ${G.elim[p]?'elim':''}`;
+    div.className=`pcard ${PCSS[p]}${isAct?' act':''}${G.elim[p]?' elim':''}`;
     const path=G.elim[p]?null:bfs(G.pos[p],GOALS[p]);
     const dist=path?path.dist:'∞';
-    const cell=cells[G.pos[p]];
     div.innerHTML=`<div class="pname ${PCSS[p]}">${G.elim[p]?'✖ ':isAct?'▶ ':''}${PNAMES[p]}</div>
-      <div class="prow"><span>Dist. cible</span><span>${dist}</span></div>
-      <div class="prow"><span>Murs</span><span>${G.wr[p]}/${PWALLS_START}</span></div>
-      <div class="wpips">${Array.from({length:PWALLS_START},(_,i)=>`<div class="wpip ${PCSS[p]} ${i>=G.wr[p]?'used':''}"></div>`).join('')}</div>`;
+      <div class="prow"><span>Distance cible</span><span>${dist}</span></div>
+      <div class="prow"><span>Murs restants</span><span>${G.wr[p]}</span></div>
+      <div class="wpips">${Array.from({length:PWMAX},(_,i)=>`<div class="wpip ${PCSS[p]}${i>=G.wr[p]?' used':''}"></div>`).join('')}</div>`;
     el.appendChild(div);
   }
   document.getElementById('tcount').textContent=`Tour ${G.turnCount+1}`;
@@ -780,7 +889,7 @@ function clearLog(){ document.getElementById('logbox').innerHTML=''; }
 function notify(msg){
   const n=document.getElementById('notif');
   n.textContent=msg; n.style.display='block';
-  clearTimeout(n._t); n._t=setTimeout(()=>n.style.display='none',2000);
+  clearTimeout(n._t); n._t=setTimeout(()=>n.style.display='none',2200);
 }
 
 function showScreen(id){
@@ -792,29 +901,31 @@ function showResult(winner){
   const titles=['🏆 VICTOIRE !','💀 DÉFAITE','💀 DÉFAITE'];
   const subs=['Vous avez atteint votre objectif !','L\'IA Rouge a gagné...','L\'IA Violette a gagné...'];
   const el=document.getElementById('rtitle');
-  el.textContent=titles[winner]||'FIN';
+  el.textContent=winner>=0?(titles[winner]||'FIN'):'Fin';
   el.className='rtitle '+(winner===0?'win':'lose');
-  document.getElementById('rsub').textContent=subs[winner]||'';
-  const st=document.getElementById('rstats');
-  st.innerHTML=`
-    <div class="rrow"><span>Gagnant</span><span class="rv">${PNAMES[winner]}</span></div>
+  document.getElementById('rsub').textContent=winner>=0?(subs[winner]||''):'Partie terminée';
+  document.getElementById('rstats').innerHTML=`
+    <div class="rrow"><span>Gagnant</span><span class="rv">${winner>=0?PNAMES[winner]:'—'}</span></div>
     <div class="rrow"><span>Tours joués</span><span class="rv">${G.turnCount}</span></div>
-    <div class="rrow"><span>Murs posés (vous)</span><span class="rv">${PWALLS_START-G.wr[0]}</span></div>
-    <div class="rrow"><span>Murs restants (vous)</span><span class="rv">${G.wr[0]}</span></div>
-  `;
+    <div class="rrow"><span>Murs posés (vous)</span><span class="rv">${PWMAX-G.wr[0]}</span></div>
+    <div class="rrow"><span>Murs restants (vous)</span><span class="rv">${G.wr[0]}</span></div>`;
   showScreen('screen-result');
 }
 
+// ============================================================
+// BOOT
+// ============================================================
 function startGame(){
   setupCanvas();
+  buildCells();
+  buildGoals();
   initGame();
   showScreen('screen-game');
 }
 
-// Boot
 setupCanvas();
 buildCells();
-buildAdj();
+buildGoals();
 </script>
 </body>
 </html>
