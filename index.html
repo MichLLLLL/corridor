@@ -78,6 +78,16 @@ body::before {
 .wall-pip.pip-idle    { width: 30px; }
 .wall-pip.pip-used    { opacity: 0.1; }
 
+/* ---- AD SLOTS ---- */
+.ad-slot {
+  margin-top: 0.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.side-panel.right .ad-slot { justify-content: flex-end; }
+
 /* ---- CENTER ---- */
 .center-col { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
 
@@ -207,6 +217,7 @@ body::before {
   color: rgba(26,21,16,0.28); background: none; border: none;
   cursor: pointer; padding: 0.2rem 0;
   border-bottom: 1px solid transparent;
+  text-decoration: none;
   transition: color 0.2s ease, border-color 0.2s ease;
 }
 .footer-btn:hover { color: var(--ink); border-color: rgba(26,21,16,0.3); }
@@ -327,6 +338,20 @@ body::before {
     <div class="player-label p2 inactive" id="lbl-p2">J2</div>
     <div class="walls-lbl">Barrières</div>
     <div class="wall-track" id="track-p2"></div>
+
+    <!-- Ad slot: 160x300 -->
+    <div class="ad-slot">
+      <script>
+        atOptions = {
+          'key' : '0b5ed2658e7321028b2cdd705d1e6182',
+          'format' : 'iframe',
+          'height' : 300,
+          'width' : 160,
+          'params' : {}
+        };
+      </script>
+      <script src="https://www.highperformanceformat.com/0b5ed2658e7321028b2cdd705d1e6182/invoke.js"></script>
+    </div>
   </div>
 </div>
 
@@ -342,6 +367,7 @@ body::before {
   <button class="footer-btn" onclick="openModal('modal-howto')">Comment jouer</button>
   <button class="footer-btn" onclick="openModal('modal-rules')">Règles complètes</button>
   <button class="footer-btn" onclick="openModal('modal-privacy')">Confidentialité</button>
+  <a class="footer-btn" href="https://www.effectivecpmnetwork.com/n8p7rnmxj?key=1fd64f079b3514e0f08fdce2ff85cee6" target="_blank" rel="noopener">Sponsor</a>
 </div>
 
 <!-- ---- MODAL : COMMENT JOUER ---- -->
